@@ -3,6 +3,7 @@
 #include <optional>
 #include <string_view>
 #include <string>
+#include <variant>
 
 namespace version_weaver {
 
