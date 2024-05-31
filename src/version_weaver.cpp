@@ -11,7 +11,7 @@ namespace version_weaver {
   std::string minimum(std::string_view range)  { return ""; }
   std::string clean(std::string_view range)  { return ""; }
 
-  std::variant<Version, ParseError> parse(const std::string_view input) {
+  std::variant<Version, ParseError> parse(std::string_view input) {
     if (input.size() > MAX_VERSION_LENGTH) {
       return ParseError::VERSION_LARGER_THAN_MAX_LENGTH;
     }

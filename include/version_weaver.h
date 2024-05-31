@@ -6,6 +6,7 @@
 
 namespace version_weaver {
 
+  // https://semver.org/#does-semver-have-a-size-limit-on-the-version-string
   static constexpr size_t MAX_VERSION_LENGTH = 256;
 
   bool validate(std::string_view version);
