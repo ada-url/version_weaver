@@ -13,14 +13,13 @@ std::string coerce(std::string_view version) { return ""; }
 std::string minimum(std::string_view range) { return ""; }
 std::string clean(std::string_view range) { return ""; }
 
-inline std::string_view trim_whitespace(std::string_view input) noexcept {
-  while (!input.empty() && std::isspace(input.front())) {
-    input.remove_prefix(1);
+inline void trim_whitespace(std::string_view* input) noexcept {
+  while (!input->empty() && std::isspace(input->front())) {
+    input->remove_prefix(1);
   }
-  while (!input.empty() && std::isspace(input.back())) {
-    input.remove_suffix(1);
+  while (!input->empty() && std::isspace(input->back())) {
+    input->remove_suffix(1);
   }
-  return input;
 }
 
 std::expected<Version, ParseError> parse(std::string_view input) {
@@ -28,7 +27,8 @@ std::expected<Version, ParseError> parse(std::string_view input) {
     return std::unexpected(ParseError::VERSION_LARGER_THAN_MAX_LENGTH);
   }
 
-  std::string_view input_copy = trim_whitespace(input);
+  std::string_view input_copy = input;
+  trim_whitespace(&input_copy);
 
   auto dot_iterator = input_copy.find('.');
   if (dot_iterator == std::string_view::npos) {
@@ -90,4 +90,5 @@ std::expected<Version, ParseError> parse(std::string_view input) {
   version.build = input_copy;
   return version;
 }
+
 }  // namespace version_weaver
