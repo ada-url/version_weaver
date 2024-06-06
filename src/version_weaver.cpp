@@ -2,9 +2,7 @@
 #include <algorithm>
 #include <cctype>
 namespace version_weaver {
-bool validate(std::string_view version) {
-  return bool(parse(version));
-}
+bool validate(std::string_view version) { return bool(parse(version)); }
 
 bool gt(std::string_view version1, std::string_view version2) { return true; }
 bool lt(std::string_view version1, std::string_view version2) { return true; }
@@ -16,9 +14,9 @@ std::string minimum(std::string_view range) { return ""; }
 std::string clean(std::string_view range) { return ""; }
 
 inline std::string_view trim_whitespace(std::string_view str) {
-    auto start = std::find_if_not(str.begin(), str.end(), std::isspace);
-    auto end = std::find_if_not(str.rbegin(), str.rend(), std::isspace).base();
-    return std::string_view(&(*start), std::distance(start, end));
+  auto start = std::find_if_not(str.begin(), str.end(), std::isspace);
+  auto end = std::find_if_not(str.rbegin(), str.rend(), std::isspace).base();
+  return std::string_view(&(*start), std::distance(start, end));
 }
 
 std::expected<Version, ParseError> parse(std::string_view input) {
@@ -49,36 +47,40 @@ std::expected<Version, ParseError> parse(std::string_view input) {
   }
 
   auto minor = input_copy.substr(0, dot_iterator);
-  if (minor.empty() || (minor.front() == '0' && minor.size() > 1) ) {
+  if (minor.empty() || (minor.front() == '0' && minor.size() > 1)) {
     // Version components can not have leading zeroes.
     return std::unexpected(ParseError::INVALID_INPUT);
   }
   version.minor = minor;
   input_copy = input_copy.substr(dot_iterator + 1);
   dot_iterator = input_copy.find_first_of("-+");
-  auto patch = (dot_iterator == std::string_view::npos) ? input_copy : input_copy.substr(0, dot_iterator);
+  auto patch = (dot_iterator == std::string_view::npos)
+                   ? input_copy
+                   : input_copy.substr(0, dot_iterator);
   if (patch.empty() || (patch.front() == '0' && patch.size() > 1)) {
     return std::unexpected(ParseError::INVALID_INPUT);
   }
   version.patch = patch;
-  if(dot_iterator == std::string_view::npos) {
+  if (dot_iterator == std::string_view::npos) {
     return version;
   }
   bool is_pre_release = input_copy[dot_iterator] == '-';
   input_copy = input_copy.substr(dot_iterator + 1);
-  if(is_pre_release) {
+  if (is_pre_release) {
     dot_iterator = input_copy.find('+');
-    auto prerelease = (dot_iterator == std::string_view::npos) ? input_copy : input_copy.substr(0, dot_iterator);
-    if(prerelease.empty()) {
+    auto prerelease = (dot_iterator == std::string_view::npos)
+                          ? input_copy
+                          : input_copy.substr(0, dot_iterator);
+    if (prerelease.empty()) {
       return std::unexpected(ParseError::INVALID_INPUT);
     }
     version.pre_release = prerelease;
-    if(dot_iterator == std::string_view::npos) {
+    if (dot_iterator == std::string_view::npos) {
       return version;
     }
     input_copy = input_copy.substr(dot_iterator + 1);
   }
-  if(input_copy.empty()) {
+  if (input_copy.empty()) {
     return std::unexpected(ParseError::INVALID_INPUT);
   }
   version.build = input_copy;
