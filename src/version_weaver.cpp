@@ -13,10 +13,14 @@ std::string coerce(std::string_view version) { return ""; }
 std::string minimum(std::string_view range) { return ""; }
 std::string clean(std::string_view range) { return ""; }
 
-inline std::string_view trim_whitespace(std::string_view str) {
-  auto start = std::find_if_not(str.begin(), str.end(), std::isspace);
-  auto end = std::find_if_not(str.rbegin(), str.rend(), std::isspace).base();
-  return std::string_view(&(*start), std::distance(start, end));
+inline std::string_view trim_whitespace(std::string_view input) noexcept {
+  while (!input.empty() && std::isspace(input.front())) {
+    input.remove_prefix(1);
+  }
+  while (!input.empty() && std::isspace(input.back())) {
+    input.remove_suffix(1);
+  }
+  return input;
 }
 
 std::expected<Version, ParseError> parse(std::string_view input) {
