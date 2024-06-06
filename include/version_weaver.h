@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <variant>
+#include <expected>
 
 namespace version_weaver {
 
@@ -58,7 +58,25 @@ enum ParseError {
   INVALID_INPUT,
 };
 
-std::variant<Version, ParseError> parse(std::string_view version);
+std::expected<Version, ParseError> parse(std::string_view version);
 }  // namespace version_weaver
 
+inline bool operator!=(const version_weaver::Version& first,
+                       const version_weaver::Version& second) {
+  if (first.major != second.major) return first.major != second.major;
+  if (first.minor != second.minor) return first.minor != second.minor;
+  return first.patch != second.patch;
+}
+inline bool operator==(const version_weaver::Version& first,
+                       const version_weaver::Version& second) {
+  if (first.major != second.major) return first.major == second.major;
+  if (first.minor != second.minor) return first.minor == second.minor;
+  return first.patch == second.patch;
+}
+/*
+inline auto operator<=>(const version_weaver::Version& first, const
+version_weaver::Version& second) { if (first.major != second.major) return
+first.major <=> second.major; if (first.minor != second.minor) return
+first.minor <=> second.minor; return first.patch <=> second.patch;
+}*/
 #endif  // VERSION_WEAVER_H
