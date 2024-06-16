@@ -16,7 +16,6 @@ bool lt(std::string_view version1, std::string_view version2);
 bool satisfies(std::string_view version, std::string_view range);
 std::string coerce(std::string_view version);
 std::string minimum(std::string_view range);
-std::string clean(std::string_view range);
 
 // A normal version number MUST take the form X.Y.Z where X, Y, and Z are
 // non-negative integers, and MUST NOT contain leading zeroes.
@@ -57,6 +56,11 @@ enum ParseError {
   VERSION_LARGER_THAN_MAX_LENGTH,
   INVALID_INPUT,
 };
+
+// This will return a cleaned and trimmed semver version.
+// If the provided version is not valid a null will be returned.
+// This does not work for ranges.
+std::expected<Version, ParseError> clean(std::string_view range);
 
 std::expected<Version, ParseError> parse(std::string_view version);
 }  // namespace version_weaver

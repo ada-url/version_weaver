@@ -11,7 +11,6 @@ bool satisfies(std::string_view version, std::string_view range) {
 }
 std::string coerce(std::string_view version) { return ""; }
 std::string minimum(std::string_view range) { return ""; }
-std::string clean(std::string_view range) { return ""; }
 
 inline void trim_whitespace(std::string_view* input) noexcept {
   while (!input->empty() && std::isspace(input->front())) {
@@ -20,6 +19,17 @@ inline void trim_whitespace(std::string_view* input) noexcept {
   while (!input->empty() && std::isspace(input->back())) {
     input->remove_suffix(1);
   }
+}
+
+std::expected<Version, ParseError> clean(std::string_view input) {
+  std::string_view range = input;
+  trim_whitespace(&range);
+  if (range.empty()) return std::unexpected(ParseError::INVALID_INPUT);
+  while (!range.empty() && !std::isdigit(range.front())) {
+    range.remove_prefix(1);
+  }
+
+  return parse(range);
 }
 
 std::expected<Version, ParseError> parse(std::string_view input) {
