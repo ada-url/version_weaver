@@ -77,10 +77,15 @@ inline bool operator==(const version_weaver::Version& first,
   if (first.minor != second.minor) return first.minor == second.minor;
   return first.patch == second.patch;
 }
-/*
-inline auto operator<=>(const version_weaver::Version& first, const
-version_weaver::Version& second) { if (first.major != second.major) return
-first.major <=> second.major; if (first.minor != second.minor) return
-first.minor <=> second.minor; return first.patch <=> second.patch;
-}*/
+inline auto operator<=>(const version_weaver::Version& first,
+                        const version_weaver::Version& second) {
+  if (first.major != second.major) {
+    return first.major <=> second.major;
+  }
+  if (first.minor != second.minor) {
+    return first.minor <=> second.minor;
+  }
+  return first.patch <=> second.patch;
+}
+
 #endif  // VERSION_WEAVER_H
