@@ -25,6 +25,8 @@ std::expected<Version, ParseError> clean(std::string_view input) {
   std::string_view range = input;
   trim_whitespace(&range);
   if (range.empty()) return std::unexpected(ParseError::INVALID_INPUT);
+  // Optimization opportunity: We can remove std::isdigit() and replace it with
+  // either a hashmap or find_first_not_of("=v
   while (!range.empty() && !std::isdigit(range.front())) {
     range.remove_prefix(1);
   }
