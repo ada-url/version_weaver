@@ -1,4 +1,5 @@
 #include "version_weaver.h"
+#include <format>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -53,14 +54,25 @@ TEST(basictests, leading_zeroes) {
 }
 
 std::vector<TestData> clean_values = {
-    {"1.0.0", version_weaver::Version{"1", "0", "0"}},
+    {"1.2.3", version_weaver::Version{"1", "2", "3"}},
+    {" 1.2.3 ", version_weaver::Version{"1", "2", "3"}},
+    {" 1.2.3-4 ", version_weaver::Version{"1", "2", "3", "4"}},
+    {" 1.2.3-pre ", version_weaver::Version{"1", "2", "3", "pre"}},
     {"  =v1.2.3   ", version_weaver::Version{"1", "2", "3"}},
-    {"", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
+    {"v1.2.3", version_weaver::Version{"1", "2", "3"}},
+    {" v1.2.3 ", version_weaver::Version{"1", "2", "3"}},
+    {"\t1.2.3", version_weaver::Version{"1", "2", "3"}},
+    {">1.2.3", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
+    {"~1.2.3", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
+    {"<=1.2.3", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
+    // TODO(@anonrig): Enable this test.
+    //    {"1.2.x", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
 };
 
 TEST(basictests, clean) {
   for (const auto& [input, expected] : clean_values) {
     auto cleaned_result = version_weaver::clean(input);
+    std::printf("input: %s\n", input.c_str());
     ASSERT_EQ(cleaned_result.has_value(), expected.has_value());
     if (cleaned_result.has_value()) {
       ASSERT_EQ(cleaned_result->major, expected->major);

@@ -11,8 +11,6 @@ namespace version_weaver {
 static constexpr size_t MAX_VERSION_LENGTH = 256;
 
 bool validate(std::string_view version);
-bool gt(std::string_view version1, std::string_view version2);
-bool lt(std::string_view version1, std::string_view version2);
 bool satisfies(std::string_view version, std::string_view range);
 std::string coerce(std::string_view version);
 std::string minimum(std::string_view range);

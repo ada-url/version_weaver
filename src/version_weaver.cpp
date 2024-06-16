@@ -2,17 +2,14 @@
 #include <algorithm>
 #include <cctype>
 namespace version_weaver {
-bool validate(std::string_view version) { return bool(parse(version)); }
-
-bool gt(std::string_view version1, std::string_view version2) { return true; }
-bool lt(std::string_view version1, std::string_view version2) { return true; }
+bool validate(std::string_view version) { return parse(version).has_value(); }
 bool satisfies(std::string_view version, std::string_view range) {
   return true;
 }
 std::string coerce(std::string_view version) { return ""; }
 std::string minimum(std::string_view range) { return ""; }
 
-inline void trim_whitespace(std::string_view* input) noexcept {
+constexpr inline void trim_whitespace(std::string_view* input) noexcept {
   while (!input->empty() && std::isspace(input->front())) {
     input->remove_prefix(1);
   }
@@ -25,10 +22,15 @@ std::expected<Version, ParseError> clean(std::string_view input) {
   std::string_view range = input;
   trim_whitespace(&range);
   if (range.empty()) return std::unexpected(ParseError::INVALID_INPUT);
-  // Optimization opportunity: We can remove std::isdigit() and replace it with
-  // either a hashmap or find_first_not_of("=v
-  while (!range.empty() && !std::isdigit(range.front())) {
+
+  // Trim any leading value expect = and v.
+  while (!range.empty() && (range.front() == '=' || range.front() == 'v')) {
     range.remove_prefix(1);
+  }
+
+  // If range starts with a non-digit character, it is invalid.
+  if (!range.empty() && !std::isdigit(range.front())) {
+    return std::unexpected(ParseError::INVALID_INPUT);
   }
 
   return parse(range);
