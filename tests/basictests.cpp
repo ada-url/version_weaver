@@ -39,6 +39,16 @@ TEST(basictests, parse) {
   SUCCEED();
 }
 
+// A normal version number MUST take the form X.Y.Z
+// where X, Y, and Z are non-negative integers, and
+// MUST NOT contain leading zeroes.
+TEST(basictests, leading_zeroes) {
+  ASSERT_FALSE(version_weaver::parse("0.0.0").has_value());
+  ASSERT_FALSE(version_weaver::parse("01.0.0").has_value());
+  ASSERT_FALSE(version_weaver::parse("1.01.0").has_value());
+  ASSERT_FALSE(version_weaver::parse("1.0.01").has_value());
+}
+
 std::vector<TestData> clean_values = {
     {"1.0.0", version_weaver::Version{"1", "0", "0"}},
     {"  =v1.2.3   ", version_weaver::Version{"1", "2", "3"}},
