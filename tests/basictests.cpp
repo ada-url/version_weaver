@@ -1,7 +1,7 @@
 #include "version_weaver.h"
-#include <cstdlib>
 #include <vector>
-#include <format>
+
+#include <gtest/gtest.h>
 
 std::vector<std::pair<std::string, std::expected<version_weaver::Version,
                                                  version_weaver::ParseError>>>
@@ -23,27 +23,14 @@ std::vector<std::pair<std::string, std::expected<version_weaver::Version,
                                  "21AF26D3----117B344092BD"}},
 };
 
-bool test_parse() {
+TEST(basictests, parse) {
   for (const auto& [input, expected] : test_values) {
-    auto result = version_weaver::parse(input);
-    if (bool(result) != bool(expected)) {
-      std::printf("Expected %d, got %d\n", bool(expected), bool(result));
-      return false;
-    }
-    if (bool(result)) {
-      if (result.value() != expected.value()) {
-        std::printf("Expected \n");
-        return false;
-      }
-    }
+    auto parse_result = version_weaver::parse(input);
+    ASSERT_EQ(parse_result.has_value(), expected.has_value());
+    ASSERT_EQ(parse_result->major, expected->major);
+    ASSERT_EQ(parse_result->minor, expected->minor);
+    ASSERT_EQ(parse_result->patch, expected->patch);
   }
-  return true;
-}
-int main() {
-  if (!test_parse()) {
-    std::printf("Test failed\n");
-    return EXIT_FAILURE;
-  }
-  std::printf("Tests succeeded!\n");
-  return EXIT_SUCCESS;
+
+  SUCCEED();
 }
