@@ -65,8 +65,7 @@ std::vector<TestData> clean_values = {
     {">1.2.3", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
     {"~1.2.3", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
     {"<=1.2.3", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
-    // TODO(@anonrig): Enable this test.
-    //    {"1.2.x", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
+    {"1.2.x", std::unexpected(version_weaver::ParseError::INVALID_INPUT)},
 };
 
 TEST(basictests, clean) {

@@ -18,6 +18,11 @@ constexpr inline void trim_whitespace(std::string_view* input) noexcept {
   }
 }
 
+constexpr inline bool contains_only_digits(std::string_view input) noexcept {
+  // Optimization opportunity: Replace this with a hash table lookup.
+  return input.find_first_not_of("0123456789") == std::string_view::npos;
+}
+
 std::expected<Version, ParseError> clean(std::string_view input) {
   std::string_view range = input;
   trim_whitespace(&range);
@@ -56,6 +61,9 @@ std::expected<Version, ParseError> parse(std::string_view input) {
     // Version components can not have leading zeroes.
     return std::unexpected(ParseError::INVALID_INPUT);
   }
+  if (!contains_only_digits(major)) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
   version.major = major;
   input_copy = input_copy.substr(dot_iterator + 1);
   dot_iterator = input_copy.find('.');
@@ -69,6 +77,9 @@ std::expected<Version, ParseError> parse(std::string_view input) {
     // Version components can not have leading zeroes.
     return std::unexpected(ParseError::INVALID_INPUT);
   }
+  if (!contains_only_digits(minor)) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
   version.minor = minor;
   input_copy = input_copy.substr(dot_iterator + 1);
   dot_iterator = input_copy.find_first_of("-+");
@@ -76,6 +87,9 @@ std::expected<Version, ParseError> parse(std::string_view input) {
                    ? input_copy
                    : input_copy.substr(0, dot_iterator);
   if (patch.empty() || (patch.front() == '0' && patch.size() > 1)) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
+  if (!contains_only_digits(patch)) {
     return std::unexpected(ParseError::INVALID_INPUT);
   }
   version.patch = patch;
