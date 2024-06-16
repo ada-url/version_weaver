@@ -15,11 +15,12 @@ std::vector<TestData> parse_values = {
     {"1.0.0-x-y-z.--", version_weaver::Version{"1", "0", "0", "x-y-z.--"}},
     {"1.0.0-alpha+001", version_weaver::Version{"1", "0", "0", "alpha", "001"}},
     {"1.0.0+20130313144700",
-     version_weaver::Version{"1", "0", "0", "", "20130313144700"}},
+     version_weaver::Version{"1", "0", "0", std::nullopt, "20130313144700"}},
     {"1.0.0-beta+exp.sha.5114f85",
      version_weaver::Version{"1", "0", "0", "beta", "exp.sha.5114f85"}},
     {"1.0.0+21AF26D3----117B344092BD",
-     version_weaver::Version{"1", "0", "0", "", "21AF26D3----117B344092BD"}},
+     version_weaver::Version{"1", "0", "0", std::nullopt,
+                             "21AF26D3----117B344092BD"}},
 
 };
 
@@ -31,6 +32,8 @@ TEST(basictests, parse) {
       ASSERT_EQ(parse_result->major, expected->major);
       ASSERT_EQ(parse_result->minor, expected->minor);
       ASSERT_EQ(parse_result->patch, expected->patch);
+      ASSERT_EQ(parse_result->pre_release, expected->pre_release);
+      ASSERT_EQ(parse_result->build, expected->build);
     } else {
       ASSERT_EQ(parse_result.error(), expected.error());
     }
@@ -63,6 +66,8 @@ TEST(basictests, clean) {
       ASSERT_EQ(cleaned_result->major, expected->major);
       ASSERT_EQ(cleaned_result->minor, expected->minor);
       ASSERT_EQ(cleaned_result->patch, expected->patch);
+      ASSERT_EQ(cleaned_result->pre_release, expected->pre_release);
+      ASSERT_EQ(cleaned_result->build, expected->build);
     } else {
       ASSERT_EQ(cleaned_result.error(), expected.error());
     }
