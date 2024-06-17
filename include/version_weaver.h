@@ -11,12 +11,9 @@ namespace version_weaver {
 static constexpr size_t MAX_VERSION_LENGTH = 256;
 
 bool validate(std::string_view version);
-bool gt(std::string_view version1, std::string_view version2);
-bool lt(std::string_view version1, std::string_view version2);
 bool satisfies(std::string_view version, std::string_view range);
 std::string coerce(std::string_view version);
 std::string minimum(std::string_view range);
-std::string clean(std::string_view range);
 
 // A normal version number MUST take the form X.Y.Z where X, Y, and Z are
 // non-negative integers, and MUST NOT contain leading zeroes.
@@ -58,6 +55,11 @@ enum ParseError {
   INVALID_INPUT,
 };
 
+// This will return a cleaned and trimmed semver version.
+// If the provided version is not valid a null will be returned.
+// This does not work for ranges.
+std::expected<Version, ParseError> clean(std::string_view range);
+
 std::expected<Version, ParseError> parse(std::string_view version);
 }  // namespace version_weaver
 
@@ -73,10 +75,15 @@ inline bool operator==(const version_weaver::Version& first,
   if (first.minor != second.minor) return first.minor == second.minor;
   return first.patch == second.patch;
 }
-/*
-inline auto operator<=>(const version_weaver::Version& first, const
-version_weaver::Version& second) { if (first.major != second.major) return
-first.major <=> second.major; if (first.minor != second.minor) return
-first.minor <=> second.minor; return first.patch <=> second.patch;
-}*/
+inline auto operator<=>(const version_weaver::Version& first,
+                        const version_weaver::Version& second) {
+  if (first.major != second.major) {
+    return first.major <=> second.major;
+  }
+  if (first.minor != second.minor) {
+    return first.minor <=> second.minor;
+  }
+  return first.patch <=> second.patch;
+}
+
 #endif  // VERSION_WEAVER_H

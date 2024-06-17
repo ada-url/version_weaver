@@ -2,24 +2,43 @@
 #include <algorithm>
 #include <cctype>
 namespace version_weaver {
-bool validate(std::string_view version) { return bool(parse(version)); }
-
-bool gt(std::string_view version1, std::string_view version2) { return true; }
-bool lt(std::string_view version1, std::string_view version2) { return true; }
+bool validate(std::string_view version) { return parse(version).has_value(); }
 bool satisfies(std::string_view version, std::string_view range) {
   return true;
 }
 std::string coerce(std::string_view version) { return ""; }
 std::string minimum(std::string_view range) { return ""; }
-std::string clean(std::string_view range) { return ""; }
 
-inline void trim_whitespace(std::string_view* input) noexcept {
+constexpr inline void trim_whitespace(std::string_view* input) noexcept {
   while (!input->empty() && std::isspace(input->front())) {
     input->remove_prefix(1);
   }
   while (!input->empty() && std::isspace(input->back())) {
     input->remove_suffix(1);
   }
+}
+
+constexpr inline bool contains_only_digits(std::string_view input) noexcept {
+  // Optimization opportunity: Replace this with a hash table lookup.
+  return input.find_first_not_of("0123456789") == std::string_view::npos;
+}
+
+std::expected<Version, ParseError> clean(std::string_view input) {
+  std::string_view range = input;
+  trim_whitespace(&range);
+  if (range.empty()) return std::unexpected(ParseError::INVALID_INPUT);
+
+  // Trim any leading value expect = and v.
+  while (!range.empty() && (range.front() == '=' || range.front() == 'v')) {
+    range.remove_prefix(1);
+  }
+
+  // If range starts with a non-digit character, it is invalid.
+  if (!range.empty() && !std::isdigit(range.front())) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
+
+  return parse(range);
 }
 
 std::expected<Version, ParseError> parse(std::string_view input) {
@@ -42,6 +61,9 @@ std::expected<Version, ParseError> parse(std::string_view input) {
     // Version components can not have leading zeroes.
     return std::unexpected(ParseError::INVALID_INPUT);
   }
+  if (!contains_only_digits(major)) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
   version.major = major;
   input_copy = input_copy.substr(dot_iterator + 1);
   dot_iterator = input_copy.find('.');
@@ -55,6 +77,9 @@ std::expected<Version, ParseError> parse(std::string_view input) {
     // Version components can not have leading zeroes.
     return std::unexpected(ParseError::INVALID_INPUT);
   }
+  if (!contains_only_digits(minor)) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
   version.minor = minor;
   input_copy = input_copy.substr(dot_iterator + 1);
   dot_iterator = input_copy.find_first_of("-+");
@@ -62,6 +87,9 @@ std::expected<Version, ParseError> parse(std::string_view input) {
                    ? input_copy
                    : input_copy.substr(0, dot_iterator);
   if (patch.empty() || (patch.front() == '0' && patch.size() > 1)) {
+    return std::unexpected(ParseError::INVALID_INPUT);
+  }
+  if (!contains_only_digits(patch)) {
     return std::unexpected(ParseError::INVALID_INPUT);
   }
   version.patch = patch;

@@ -8,6 +8,6 @@ Usage:
 ```
 cmake -B build
 cmake --build build
-ctest --test-dir build
+ctest --test-dir build --output-on-failure
 ./build/benchmarks/benchmark 
 ```
