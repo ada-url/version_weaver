@@ -3,9 +3,6 @@
 #include <cctype>
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
-bool satisfies(std::string_view version, std::string_view range) {
-  return true;
-}
 std::string coerce(std::string_view version) { return ""; }
 std::string minimum(std::string_view range) { return ""; }
 
