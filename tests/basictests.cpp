@@ -84,3 +84,28 @@ TEST(basictests, clean) {
     }
   }
 }
+
+using OrderingData = std::tuple<std::string, std::string, std::strong_ordering>;
+
+std::vector<OrderingData> ordering_values = {
+    {"1.0.0", "1.0.0", std::strong_ordering::equal},
+    {"1.0.0", "1.0.1", std::strong_ordering::less},
+    {"1.0.0", "1.1.0", std::strong_ordering::less},
+    {"1.0.0", "2.0.0", std::strong_ordering::less},
+    {"1.0.0", "1.0.0-alpha", std::strong_ordering::greater},
+    {"1.0.0-alpha", "1.0.0-alpha", std::strong_ordering::equal},
+    {"1.0.0-alpha", "1.0.0-alpha.1", std::strong_ordering::less},
+    {"1.0.0-alpha.1", "1.0.0-beta", std::strong_ordering::less},
+    {"1.0.0-beta", "1.0.0-beta.2", std::strong_ordering::less},
+    {"1.0.0-beta.2", "1.0.0-beta.11", std::strong_ordering::greater},
+    {"1.0.0-beta.11", "1.0.0-rc.1", std::strong_ordering::less},
+    {"1.0.0-rc.1", "1.0.0", std::strong_ordering::less},
+};
+
+TEST(basictests, order) {
+  for (const auto& [view1, view2, order] : ordering_values) {
+    auto v1 = version_weaver::parse(view1).value();
+    auto v2 = version_weaver::parse(view2).value();
+    ASSERT_EQ(v1 <=> v2, order);
+  }
+}

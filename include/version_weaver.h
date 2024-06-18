@@ -11,6 +11,7 @@ namespace version_weaver {
 static constexpr size_t MAX_VERSION_LENGTH = 256;
 
 bool validate(std::string_view version);
+
 bool satisfies(std::string_view version, std::string_view range);
 std::string coerce(std::string_view version);
 std::string minimum(std::string_view range);
@@ -58,32 +59,81 @@ enum ParseError {
 // This will return a cleaned and trimmed semver version.
 // If the provided version is not valid a null will be returned.
 // This does not work for ranges.
-std::expected<Version, ParseError> clean(std::string_view range);
+std::expected<Version, ParseError> clean(std::string_view input);
 
 std::expected<Version, ParseError> parse(std::string_view version);
 }  // namespace version_weaver
 
-inline bool operator!=(const version_weaver::Version& first,
-                       const version_weaver::Version& second) {
-  if (first.major != second.major) return first.major != second.major;
-  if (first.minor != second.minor) return first.minor != second.minor;
-  return first.patch != second.patch;
-}
-inline bool operator==(const version_weaver::Version& first,
-                       const version_weaver::Version& second) {
-  if (first.major != second.major) return first.major == second.major;
-  if (first.minor != second.minor) return first.minor == second.minor;
-  return first.patch == second.patch;
-}
+// https://semver.org/#spec-item-11
 inline auto operator<=>(const version_weaver::Version& first,
                         const version_weaver::Version& second) {
+  auto number_string_compare = [](std::string_view first,
+                                  std::string_view second) {
+    if (first.size() > second.size()) {
+      return std::strong_ordering::greater;
+    } else if (first.size() < second.size()) {
+      return std::strong_ordering::less;
+    }
+    for (size_t i = 0; i < first.size(); i++) {
+      if (first[i] > second[i]) {
+        return std::strong_ordering::greater;
+      } else if (first[i] < second[i]) {
+        return std::strong_ordering::less;
+      }
+    }
+    return std::strong_ordering::equal;
+  };
   if (first.major != second.major) {
-    return first.major <=> second.major;
+    return number_string_compare(first.major, second.major);
   }
   if (first.minor != second.minor) {
-    return first.minor <=> second.minor;
+    return number_string_compare(first.minor, second.minor);
   }
-  return first.patch <=> second.patch;
+  if (first.patch != second.patch) {
+    return number_string_compare(first.patch, second.patch);
+  }
+  if (second.pre_release.has_value() && !first.pre_release.has_value()) {
+    return std::strong_ordering::greater;
+  }
+  if (first.pre_release.has_value() && !second.pre_release.has_value()) {
+    return std::strong_ordering::less;
+  }
+  if (!first.pre_release.has_value() && !second.pre_release.has_value()) {
+    return std::strong_ordering::equal;
+  }
+  if (first.pre_release.value() == second.pre_release.value()) {
+    return std::strong_ordering::equal;
+  }
+  auto only_digits = [](std::string_view first) {
+    for (auto c : first) {
+      if (c < '0' || c > '9') {
+        return false;
+      }
+    }
+    return true;
+  };
+  bool first_numeric = only_digits(first.pre_release.value());
+  bool second_numeric = only_digits(second.pre_release.value());
+  if (first_numeric && !second_numeric) {
+    return std::strong_ordering::greater;
+  }
+  if (!first_numeric && second_numeric) {
+    return std::strong_ordering::less;
+  }
+  if (first_numeric && second_numeric) {
+    return number_string_compare(first.pre_release.value(),
+                                 second.pre_release.value());
+  }
+  size_t min_size = std::min(first.pre_release.value().size(),
+                             second.pre_release.value().size());
+  for (size_t i = 0; i < min_size; i++) {
+    if (first.pre_release.value()[i] > second.pre_release.value()[i]) {
+      return std::strong_ordering::greater;
+    } else if (first.pre_release.value()[i] < second.pre_release.value()[i]) {
+      return std::strong_ordering::less;
+    }
+  }
+  return first.pre_release.value().size() <=> second.pre_release.value().size();
 }
 
 #endif  // VERSION_WEAVER_H
