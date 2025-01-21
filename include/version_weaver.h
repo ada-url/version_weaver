@@ -21,7 +21,7 @@ std::string minimum(std::string_view range);
 // X is the major version, Y is the minor version, and Z is the patch version.
 // Each element MUST increase numerically.
 // For instance: 1.9.0 -> 1.10.0 -> 1.11.0.
-struct Version {
+struct version {
   std::string_view major;
   std::string_view minor;
   std::string_view patch;
@@ -51,7 +51,7 @@ struct Version {
   std::optional<std::string_view> build;
 };
 
-enum ParseError {
+enum parse_error {
   VERSION_LARGER_THAN_MAX_LENGTH,
   INVALID_INPUT,
 };
@@ -59,14 +59,14 @@ enum ParseError {
 // This will return a cleaned and trimmed semver version.
 // If the provided version is not valid a null will be returned.
 // This does not work for ranges.
-std::expected<Version, ParseError> clean(std::string_view input);
+std::expected<version, parse_error> clean(std::string_view input);
 
-std::expected<Version, ParseError> parse(std::string_view version);
+std::expected<version, parse_error> parse(std::string_view version);
 }  // namespace version_weaver
 
 // https://semver.org/#spec-item-11
-inline auto operator<=>(const version_weaver::Version& first,
-                        const version_weaver::Version& second) {
+inline auto operator<=>(const version_weaver::version& first,
+                        const version_weaver::version& second) {
   auto number_string_compare = [](std::string_view first,
                                   std::string_view second) {
     if (first.size() > second.size()) {
