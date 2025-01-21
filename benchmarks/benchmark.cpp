@@ -43,7 +43,7 @@ void bench(const std::vector<std::string> &input) {
                bench(
                    [&input, &sum]() {
                      for (std::string_view v : input) {
-                       sum += version_weaver::validate(v);
+                       sum = sum + version_weaver::validate(v);
                      }
                    },
                    min_repeat, min_time_ns, max_repeat));

@@ -20,10 +20,10 @@ constexpr inline bool contains_only_digits(std::string_view input) noexcept {
   return input.find_first_not_of("0123456789") == std::string_view::npos;
 }
 
-std::expected<Version, ParseError> clean(std::string_view input) {
+std::expected<version, parse_error> clean(std::string_view input) {
   std::string_view range = input;
   trim_whitespace(&range);
-  if (range.empty()) return std::unexpected(ParseError::INVALID_INPUT);
+  if (range.empty()) return std::unexpected(parse_error::INVALID_INPUT);
 
   // Trim any leading value expect = and v.
   while (!range.empty() && (range.front() == '=' || range.front() == 'v')) {
@@ -32,15 +32,15 @@ std::expected<Version, ParseError> clean(std::string_view input) {
 
   // If range starts with a non-digit character, it is invalid.
   if (!range.empty() && !std::isdigit(range.front())) {
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
 
   return parse(range);
 }
 
-std::expected<Version, ParseError> parse(std::string_view input) {
+std::expected<version, parse_error> parse(std::string_view input) {
   if (input.size() > MAX_VERSION_LENGTH) {
-    return std::unexpected(ParseError::VERSION_LARGER_THAN_MAX_LENGTH);
+    return std::unexpected(parse_error::VERSION_LARGER_THAN_MAX_LENGTH);
   }
 
   std::string_view input_copy = input;
@@ -49,33 +49,33 @@ std::expected<Version, ParseError> parse(std::string_view input) {
   auto dot_iterator = input_copy.find('.');
   if (dot_iterator == std::string_view::npos) {
     // Only major exists. No minor or patch.
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
-  Version version;
+  version version;
   auto major = input_copy.substr(0, dot_iterator);
 
   if (major.empty() || major.front() == '0') {
     // Version components can not have leading zeroes.
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   if (!contains_only_digits(major)) {
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   version.major = major;
   input_copy = input_copy.substr(dot_iterator + 1);
   dot_iterator = input_copy.find('.');
   if (dot_iterator == std::string_view::npos) {
     // Only major and minor exists. No patch.
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
 
   auto minor = input_copy.substr(0, dot_iterator);
   if (minor.empty() || (minor.front() == '0' && minor.size() > 1)) {
     // Version components can not have leading zeroes.
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   if (!contains_only_digits(minor)) {
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   version.minor = minor;
   input_copy = input_copy.substr(dot_iterator + 1);
@@ -84,10 +84,10 @@ std::expected<Version, ParseError> parse(std::string_view input) {
                    ? input_copy
                    : input_copy.substr(0, dot_iterator);
   if (patch.empty() || (patch.front() == '0' && patch.size() > 1)) {
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   if (!contains_only_digits(patch)) {
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   version.patch = patch;
   if (dot_iterator == std::string_view::npos) {
@@ -101,7 +101,7 @@ std::expected<Version, ParseError> parse(std::string_view input) {
                           ? input_copy
                           : input_copy.substr(0, dot_iterator);
     if (prerelease.empty()) {
-      return std::unexpected(ParseError::INVALID_INPUT);
+      return std::unexpected(parse_error::INVALID_INPUT);
     }
     version.pre_release = prerelease;
     if (dot_iterator == std::string_view::npos) {
@@ -110,7 +110,7 @@ std::expected<Version, ParseError> parse(std::string_view input) {
     input_copy = input_copy.substr(dot_iterator + 1);
   }
   if (input_copy.empty()) {
-    return std::unexpected(ParseError::INVALID_INPUT);
+    return std::unexpected(parse_error::INVALID_INPUT);
   }
   version.build = input_copy;
   return version;
