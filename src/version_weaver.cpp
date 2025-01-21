@@ -7,7 +7,7 @@ namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
 
 std::string coerce(const std::string& version) {
-  if (version.empty() || std::all_of(version.begin(), version.end(), isspace)) {
+  if (version.empty()) {
     return "0.0.0";
   }
 
