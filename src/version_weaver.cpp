@@ -11,20 +11,24 @@ std::string coerce(const std::string& version) {
     return "0.0.0";
   }
 
+  // Regular expression to match major, minor, and patch components
   std::regex semverRegex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?)");
   std::smatch match;
 
   if (std::regex_search(version, match, semverRegex)) {
-    std::string major = match[1].str();  // First number
-    std::string minor = match[2].matched ? match[2].str()
-                                         : "0";  // Second number or default "0"
-    std::string patch =
-        match[3].matched ? match[3].str() : "0";  // Third number or default "0"
+    std::string major =
+        std::to_string(std::stoll(match[1].str()));  // First number
+    std::string minor = match[2].matched
+                            ? std::to_string(std::stoll(match[2].str()))
+                            : "0";  // Second number or "0"
+    std::string patch = match[3].matched
+                            ? std::to_string(std::stoll(match[3].str()))
+                            : "0";  // Third number or "0"
 
     return major + "." + minor + "." + patch;
   }
 
-  // Return “0.0.0.0” by default if no valid semver is found
+  // Return "0.0.0" if no valid semver is found
   return "0.0.0";
 }
 
