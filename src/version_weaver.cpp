@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cctype>
 #include <regex>
-#include <iostream>
 
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
