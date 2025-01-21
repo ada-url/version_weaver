@@ -13,7 +13,7 @@ static constexpr size_t MAX_VERSION_LENGTH = 256;
 bool validate(std::string_view version);
 
 bool satisfies(std::string_view version, std::string_view range);
-std::string coerce(std::string_view version);
+std::string coerce(const std::string& version);
 std::string minimum(std::string_view range);
 
 // A normal version number MUST take the form X.Y.Z where X, Y, and Z are

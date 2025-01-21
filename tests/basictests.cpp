@@ -109,3 +109,20 @@ TEST(basictests, order) {
     ASSERT_EQ(v1 <=> v2, order);
   }
 }
+
+using CoerceData = std::pair<std::string, std::string>;
+std::vector<CoerceData> coerce_values = {
+    {"1.2.3", "1.2.3"},  {" 1.2.3 ", "1.2.3"}, {"1.2.3.4", "1.2.3"},
+    {"v1.2.3", "1.2.3"}, {"=1.2.3", "1.2.3"},  {"1.2", "1.2.0"},
+    {"1", "1.0.0"},      {"1.2.x", "1.2.0"},   {"alpha1.2.3", "1.2.3"},
+    {"", "0.0.0"},
+};
+
+TEST(basictests, coerce) {
+  for (const auto& [input, expected] : coerce_values) {
+    auto result = version_weaver::coerce(input);
+    std::printf("input: '%s', expected: '%s', result: '%s'\n", input.c_str(),
+                expected.c_str(), result.c_str());
+    ASSERT_EQ(result, expected);
+  }
+}
