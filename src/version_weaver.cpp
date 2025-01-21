@@ -8,7 +8,7 @@ bool validate(std::string_view version) { return parse(version).has_value(); }
 
 std::string coerce(const std::string& version) {
   if (version.empty()) {
-    return "0.0.0";
+    return std::nullopt;
   }
 
   // Regular expression to match major, minor, and patch components
