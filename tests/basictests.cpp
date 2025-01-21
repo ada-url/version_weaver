@@ -177,8 +177,6 @@ std::vector<CoerceData> coerce_values = {
 TEST(basictests, coerce) {
   for (const auto& [input, expected] : coerce_values) {
     auto result = version_weaver::coerce(input);
-    std::printf("input: '%s', expected: '%s', result: '%s'\n", input.c_str(),
-                expected.c_str(), result.c_str());
     ASSERT_EQ(result, expected);
   }
 }
