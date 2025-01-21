@@ -28,8 +28,7 @@ std::string coerce(const std::string& version) {
     return major + "." + minor + "." + patch;
   }
 
-  // Return "0.0.0" if no valid semver is found
-  return "0.0.0";
+  return std::nullopt;
 }
 
 std::string minimum(std::string_view range) { return ""; }
