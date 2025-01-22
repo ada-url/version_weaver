@@ -6,7 +6,7 @@
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
 
-std::string coerce(const std::string& version) {
+std::optional<std::string> coerce(const std::string& version) {
   if (version.empty()) {
     return std::nullopt;
   }

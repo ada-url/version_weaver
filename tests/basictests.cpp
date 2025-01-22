@@ -110,7 +110,7 @@ TEST(basictests, order) {
   }
 }
 
-using CoerceData = std::pair<std::string, std::string>;
+using CoerceData = std::pair<std::string, std::optional<std::string>>;
 std::vector<CoerceData> coerce_values = {
     {"001", "1.0.0"},
     {"01.002.03", "1.2.3"},
@@ -130,7 +130,7 @@ std::vector<CoerceData> coerce_values = {
     {"1", "1.0.0"},
     {"1.2.x", "1.2.0"},
     {"alpha1.2.3", "1.2.3"},
-    {"", "0.0.0"},
+    {"", std::nullopt},
     {".1", "1.0.0"},
     {".1.", "1.0.0"},
     {"..1", "1.0.0"},
@@ -177,6 +177,10 @@ std::vector<CoerceData> coerce_values = {
 TEST(basictests, coerce) {
   for (const auto& [input, expected] : coerce_values) {
     auto result = version_weaver::coerce(input);
-    ASSERT_EQ(result, expected);
+    if (expected.has_value()) {
+      ASSERT_EQ(result, expected.value());
+    } else {
+      ASSERT_FALSE(result.has_value());
+    }
   }
 }
