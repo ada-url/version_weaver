@@ -1,9 +1,36 @@
 #include "version_weaver.h"
 #include <algorithm>
 #include <cctype>
+#include <regex>
+
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
-std::string coerce(std::string_view version) { return ""; }
+
+std::optional<std::string> coerce(const std::string& version) {
+  if (version.empty()) {
+    return std::nullopt;
+  }
+
+  // Regular expression to match major, minor, and patch components
+  std::regex semverRegex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?)");
+  std::smatch match;
+
+  if (std::regex_search(version, match, semverRegex)) {
+    std::string major =
+        std::to_string(std::stoll(match[1].str()));  // First number
+    std::string minor = match[2].matched
+                            ? std::to_string(std::stoll(match[2].str()))
+                            : "0";  // Second number or "0"
+    std::string patch = match[3].matched
+                            ? std::to_string(std::stoll(match[3].str()))
+                            : "0";  // Third number or "0"
+
+    return major + "." + minor + "." + patch;
+  }
+
+  return std::nullopt;
+}
+
 std::string minimum(std::string_view range) { return ""; }
 
 constexpr inline void trim_whitespace(std::string_view* input) noexcept {
