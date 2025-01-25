@@ -1,0 +1,15 @@
+{
+  "name": "node-version-weaver",
+  "description": "N-API port of node-semver",
+  "dependencies": {
+    "bindings": "~1.5.0",
+    "node-addon-api": "^8.3.0"
+  },
+  "scripts": {
+    "build": "cmake-js --prefer-make compile",
+    "test": "TODO"
+  },
+  "devDependencies": {
+    "cmake-js": "^7.3.0"
+  }
+}
