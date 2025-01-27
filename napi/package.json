@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "cmake-js --prefer-make compile",
-    "test": "tap"
+    "test": "tap build/test -d./tap_output --no-coverage || true && node compare_test_status.mjs"
   },
   "devDependencies": {
     "cmake-js": "^7.3.0",

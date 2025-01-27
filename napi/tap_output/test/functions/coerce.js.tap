@@ -1,0 +1,29 @@
+TAP version 13
+# Subtest: coerce tests
+    not ok 1 - String expected
+      ---
+      stack: |
+        build/test/functions/coerce.js:30:12
+        Array.forEach (<anonymous>)
+        Test.<anonymous> (build/test/functions/coerce.js:28:16)
+      at:
+        line: 30
+        column: 12
+        file: build/test/functions/coerce.js
+      type: TypeError
+      tapCaught: testFunctionThrow
+      test: coerce tests
+      source: |2
+            const msg = `coerce(${input}) should be null`
+            t.same(coerce(input), null, msg)
+        -----------^
+          })
+      ...
+    
+    1..1
+    # failed 1 test
+not ok 1 - coerce tests 
+
+1..1
+# failed 1 test
+
