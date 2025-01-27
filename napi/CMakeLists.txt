@@ -46,3 +46,24 @@ foreach(FUNCTION ${FUNCTIONS})
   add_custom_command_with_target(${FUNCTION} ${CMAKE_BINARY_DIR}/functions/${FUNCTION}.js ${CMAKE_SOURCE_DIR}/templates/functions.template ${CMAKE_BINARY_DIR}/functions)
 endforeach()
 
+set(NODE_SEMVER_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/node-semver)
+ExternalProject_Add(node-semver
+  GIT_REPOSITORY https://github.com/npm/node-semver.git
+  GIT_TAG v7.6.3
+  GIT_SHALLOW true
+  PREFIX ${NODE_SEMVER_PREFIX}
+  CONFIGURE_COMMAND true
+  BUILD_COMMAND true
+  INSTALL_COMMAND true
+)
+
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/test
+    COMMAND rm -rf ${CMAKE_BINARY_DIR}/test && mv ${NODE_SEMVER_PREFIX}/src/node-semver/test ${CMAKE_BINARY_DIR}/test
+    DEPENDS node-semver
+    COMMENT "Copying node-semver test directory"
+)
+
+add_custom_target(copy_node_semver_test ALL DEPENDS ${CMAKE_BINARY_DIR}/test)
+add_dependencies(${PROJECT_NAME} copy_node_semver_test)
+

@@ -7,9 +7,10 @@
   },
   "scripts": {
     "build": "cmake-js --prefer-make compile",
-    "test": "TODO"
+    "test": "tap"
   },
   "devDependencies": {
-    "cmake-js": "^7.3.0"
+    "cmake-js": "^7.3.0",
+    "tap": "^16.0.0"
   }
 }
