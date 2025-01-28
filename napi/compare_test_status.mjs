@@ -18,12 +18,10 @@ describe("compare test results", { concurrency: true }, async () => {
   for await (const dirent of await opendir(actualDir, { recursive: true })) {
     if (dirent.isDirectory() || !dirent.name.endsWith(".tap")) continue;
     const actualResultPath = path.join(dirent.parentPath, dirent.name);
-    const expectedResultDir = path.join(
-      expectedDir,
-      dirent.parentPath.slice(actualDir.length),
-    );
+    const testDirSubpath = dirent.parentPath.slice(actualDir.length);
+    const expectedResultDir = path.join(expectedDir, testDirSubpath);
     const expectedResultPath = path.join(expectedResultDir, dirent.name);
-    it(actualResultPath, async (t) => {
+    it(testDirSubpath + path.sep + dirent.name.slice(0, -4), async (t) => {
       await mkdir(expectedResultDir, { recursive: true });
       const files = await Promise.all([
         open(actualResultPath, "r"),
@@ -38,7 +36,7 @@ describe("compare test results", { concurrency: true }, async () => {
         if (shouldOverwrite) {
           await files[1].writeFile(actualResult);
         } else {
-          t.assert.strictEqual(actualResult, expectedResult);
+          t.assert.strictEqual(actualResult, expectedResult, 'use --overwrite to update the snapshot');
         }
       } finally {
         await Promise.all(files.map((f) => f.close()));
