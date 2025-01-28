@@ -61,7 +61,7 @@ jobs:
           restore-keys: |
             ${{runner.os}}-yarn-
 
-      - run: cp napi && corepack yarn install --immutable
+      - run: cd napi && corepack yarn install --immutable
 
       - name: Build N-API node-semver port
         run: cd napi && corepack yarn build
