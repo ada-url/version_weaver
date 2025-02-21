@@ -247,8 +247,7 @@ std::vector<MinimumData> min_version_value = {
     // Impossible range
     {">4 <3", std::nullopt},
 
-    {"", std::nullopt}
-};
+    {"", std::nullopt}};
 
 TEST(basictests, minimum) {
   for (const auto& [input, expected] : min_version_value) {
