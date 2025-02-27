@@ -179,7 +179,7 @@ not ok 1 - without env set
       
         +
       
-        +Node.js x.x.x
+        +Node.js vXX.XX.XX
       
         +\n"
       ...
