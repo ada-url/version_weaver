@@ -12,7 +12,10 @@ const actualDir = fileURLToPath(
 const expectedDir = fileURLToPath(
   new URL("./tap_output/test/", import.meta.url),
 );
-const timeRegex = /# time=.+s$/gm;
+// Remove test duration and line numbers that might not be stable across versions of Node.js.
+const timeRegex = /(# time=.+s|(?<=node:\S+:)\d+)$/gm;
+// Node.js internals might change stack trace accross version, but that is not a relevant change for us.
+const nodeJSInternalRegex = /\n\s+\n\s+\\e\[90m\s+at\n? .+?\(\n?node:.+?:\d+:\d+\)\\e\[39m/gs;
 
 describe("compare test results", { concurrency: true }, async () => {
   for await (const dirent of await opendir(actualDir, { recursive: true })) {
@@ -32,7 +35,10 @@ describe("compare test results", { concurrency: true }, async () => {
           shouldOverwrite ?
             [await files[0].readFile("utf-8")]
           : await Promise.all(files.map(async (f) => f.readFile("utf-8")));
-        const actualResult = actualRawResult.replace(timeRegex, "");
+        const actualResult = actualRawResult
+          .replace(timeRegex, "")
+          .replace(nodeJSInternalRegex, "")
+          .replaceAll(`Node.js ${process.version}\n`, 'Node.js vXX.XX.XX\n');
         if (shouldOverwrite) {
           await files[1].writeFile(actualResult);
         } else {

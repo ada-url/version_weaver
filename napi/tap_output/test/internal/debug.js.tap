@@ -24,7 +24,7 @@ TAP version 13
     ok 2 - no signal
     not ok 3 - got no output
       ---
-      found: "node:internal/modules/cjs/loader:1252
+      found: "node:internal/modules/cjs/loader:
       
         \  throw err;
       
@@ -39,30 +39,9 @@ TAP version 13
         /Users/duhamean/Documents/nodejs/version_weaver/napi/build/test/internal/debu\
         g.js
       
-        \e[90m    at Function._resolveFilename
-        (node:internal/modules/cjs/loader:1249:15)\e[39m
-      
-        \e[90m    at Function._load (node:internal/modules/cjs/loader:1075:27)\e[39m
-      
-        \e[90m    at TracingChannel.traceSync
-        (node:diagnostics_channel:322:14)\e[39m
-      
-        \e[90m    at wrapModuleLoad (node:internal/modules/cjs/loader:219:24)\e[39m
-      
-        \e[90m    at Module.require (node:internal/modules/cjs/loader:1340:12)\e[39m
-      
-        \e[90m    at require (node:internal/modules/helpers:138:16)\e[39m
-      
         \    at Object.<anonymous>
         \e[90m(/Users/duhamean/Documents/nodejs/version_weaver/napi/\e[39mbuild/test/\
-        internal/debug.js:37:3\e[90m)\e[39m
-      
-        \e[90m    at Module._compile
-        (node:internal/modules/cjs/loader:1565:14)\e[39m
-      
-        \e[90m    at Object..js (node:internal/modules/cjs/loader:1708:10)\e[39m
-      
-        \e[90m    at Module.load (node:internal/modules/cjs/loader:1318:32)\e[39m {
+        internal/debug.js:37:3\e[90m)\e[39m {
       
         \  code: \e[32m'MODULE_NOT_FOUND'\e[39m,
       
@@ -76,7 +55,7 @@ TAP version 13
         }
       
       
-        Node.js v22.12.0\n"
+        Node.js v22.14.0\n"
       wanted: ""
       compare: ===
       at:
@@ -144,7 +123,7 @@ not ok 1 - without env set
       
         -SEMVER hello, world
       
-        +node:internal/modules/cjs/loader:1252
+        +node:internal/modules/cjs/loader:
       
         +  throw err;
       
@@ -161,31 +140,31 @@ not ok 1 - without env set
         g.js
       
         +\e[90m    at Function._resolveFilename
-        (node:internal/modules/cjs/loader:1249:15)\e[39m
+        (node:internal/modules/cjs/loader:1225:15)\e[39m
       
         +\e[90m    at Function._load
-        (node:internal/modules/cjs/loader:1075:27)\e[39m
+        (node:internal/modules/cjs/loader:1055:27)\e[39m
       
         +\e[90m    at TracingChannel.traceSync
         (node:diagnostics_channel:322:14)\e[39m
       
-        +\e[90m    at wrapModuleLoad (node:internal/modules/cjs/loader:219:24)\e[39m
+        +\e[90m    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)\e[39m
       
         +\e[90m    at Module.require
-        (node:internal/modules/cjs/loader:1340:12)\e[39m
+        (node:internal/modules/cjs/loader:1311:12)\e[39m
       
-        +\e[90m    at require (node:internal/modules/helpers:138:16)\e[39m
+        +\e[90m    at require (node:internal/modules/helpers:136:16)\e[39m
       
         +    at Object.<anonymous>
         \e[90m(/Users/duhamean/Documents/nodejs/version_weaver/napi/\e[39mbuild/test/\
         internal/debug.js:37:3\e[90m)\e[39m
       
         +\e[90m    at Module._compile
-        (node:internal/modules/cjs/loader:1565:14)\e[39m
+        (node:internal/modules/cjs/loader:1554:14)\e[39m
       
-        +\e[90m    at Object..js (node:internal/modules/cjs/loader:1708:10)\e[39m
+        +\e[90m    at Object..js (node:internal/modules/cjs/loader:1706:10)\e[39m
       
-        +\e[90m    at Module.load (node:internal/modules/cjs/loader:1318:32)\e[39m {
+        +\e[90m    at Module.load (node:internal/modules/cjs/loader:1289:32)\e[39m {
       
         +  code: \e[32m'MODULE_NOT_FOUND'\e[39m,
       
@@ -200,7 +179,7 @@ not ok 1 - without env set
       
         +
       
-        +Node.js v22.12.0
+        +Node.js x.x.x
       
         +\n"
       ...
