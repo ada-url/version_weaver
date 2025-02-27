@@ -36,18 +36,18 @@ TAP version 13
         Require stack:
       
         -
-        /Users/duhamean/Documents/nodejs/version_weaver/napi/build/test/internal/debu\
+        ./napi/build/test/internal/debu\
         g.js
       
         \    at Object.<anonymous>
-        \e[90m(/Users/duhamean/Documents/nodejs/version_weaver/napi/\e[39mbuild/test/\
+        \e[90m(./napi/\e[39mbuild/test/\
         internal/debug.js:37:3\e[90m)\e[39m {
       
         \  code: \e[32m'MODULE_NOT_FOUND'\e[39m,
       
         \  requireStack: [
       
-        \    \e[32m'/Users/duhamean/Documents/nodejs/version_weaver/napi/build/test\
+        \    \e[32m'./napi/build/test\
         /internal/debug.js'\e[39m
       
         \  ]
@@ -136,7 +136,7 @@ not ok 1 - without env set
         +Require stack:
       
         +-
-        /Users/duhamean/Documents/nodejs/version_weaver/napi/build/test/internal/debu\
+        ./napi/build/test/internal/debu\
         g.js
       
         +\e[90m    at Function._resolveFilename
@@ -156,7 +156,7 @@ not ok 1 - without env set
         +\e[90m    at require (node:internal/modules/helpers:136:16)\e[39m
       
         +    at Object.<anonymous>
-        \e[90m(/Users/duhamean/Documents/nodejs/version_weaver/napi/\e[39mbuild/test/\
+        \e[90m(./napi/\e[39mbuild/test/\
         internal/debug.js:37:3\e[90m)\e[39m
       
         +\e[90m    at Module._compile
@@ -170,7 +170,7 @@ not ok 1 - without env set
       
         +  requireStack: [
       
-        +    \e[32m'/Users/duhamean/Documents/nodejs/version_weaver/napi/build/test\
+        +    \e[32m'./napi/build/test\
         /internal/debug.js'\e[39m
       
         +  ]
