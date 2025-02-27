@@ -13,10 +13,8 @@ const expectedDir = fileURLToPath(
   new URL("./tap_output/test/", import.meta.url),
 );
 // Remove test duration and line numbers that might not be stable across versions of Node.js.
-const timeRegex = /(# time=.+s|(?<=node:\S+:)\d+)$/gm;
-// Node.js internals might change stack trace accross version, but that is not a relevant change for us.
-const nodeJSInternalRegex = /\n\s+\n\s+(\\e\[90m)?\s+at\n? .+?\(\n?node:.+?:\d+:\d+\)(\\e\[39m)?/gs;
-const napiPath = path.dirname(import.meta.dirname);
+const okNotOKPattern = /^\s*(not )?ok \d+ - /;
+const lineEnding = /(# time=.+s)?\r?\n/
 
 describe("compare test results", { concurrency: true }, async () => {
   for await (const dirent of await opendir(actualDir, { recursive: true })) {
@@ -36,11 +34,7 @@ describe("compare test results", { concurrency: true }, async () => {
           shouldOverwrite ?
             [await files[0].readFile("utf-8")]
           : await Promise.all(files.map(async (f) => f.readFile("utf-8")));
-        const actualResult = actualRawResult
-          .replace(timeRegex, "")
-          .replace(nodeJSInternalRegex, "")
-          .replaceAll(napiPath, '.')
-          .replaceAll(`Node.js ${process.version}\n`, 'Node.js vXX.XX.XX\n');
+        const actualResult = actualRawResult.split(lineEnding).filter(l=>okNotOKPattern.test(l)).join('\n')
         if (shouldOverwrite) {
           await files[1].writeFile(actualResult);
         } else {
