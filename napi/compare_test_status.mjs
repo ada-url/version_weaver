@@ -15,7 +15,7 @@ const expectedDir = fileURLToPath(
 // Remove test duration and line numbers that might not be stable across versions of Node.js.
 const timeRegex = /(# time=.+s|(?<=node:\S+:)\d+)$/gm;
 // Node.js internals might change stack trace accross version, but that is not a relevant change for us.
-const nodeJSInternalRegex = /\n\s+\n\s+\\e\[90m\s+at\n? .+?\(\n?node:.+?:\d+:\d+\)\\e\[39m/gs;
+const nodeJSInternalRegex = /\n\s+\n\s+(\\e\[90m)?\s+at\n? .+?\(\n?node:.+?:\d+:\d+\)(\\e\[39m)?/gs;
 
 describe("compare test results", { concurrency: true }, async () => {
   for await (const dirent of await opendir(actualDir, { recursive: true })) {
