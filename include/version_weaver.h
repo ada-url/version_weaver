@@ -16,8 +16,7 @@ bool satisfies(std::string_view version, std::string_view range);
 std::optional<std::string> coerce(const std::string& version);
 std::optional<std::string> incrementVersion(std::string_view version);
 std::optional<std::string> decrementVersion(std::string_view& version);
-
-std::optional<std::string> minimum(const std::string& range);
+std::optional<std::string> minimum(std::string_view range);
 
 // A normal version number MUST take the form X.Y.Z where X, Y, and Z are
 // non-negative integers, and MUST NOT contain leading zeroes.
