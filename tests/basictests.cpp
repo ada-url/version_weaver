@@ -252,7 +252,7 @@ std::vector<MinimumData> min_version_value = {
 TEST(basictests, minimum) {
   for (const auto& [input, expected] : min_version_value) {
     auto result = version_weaver::minimum(input);
-    if (expected.has_value()) {
+    if (expected) {
       std::cout << "expected.value()" << expected.value() << std::endl;
       std::cout << "result" << result.value_or("nullopt") << std::endl;
       ASSERT_EQ(result, expected.value());

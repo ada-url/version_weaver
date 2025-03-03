@@ -7,7 +7,7 @@
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
 
-std::optional<std::string> coerce(const std::string& version) {
+std::optional<std::string> coerce(const std::string_view& version) {
   if (version.empty()) {
     return std::nullopt;
   }
@@ -15,8 +15,9 @@ std::optional<std::string> coerce(const std::string& version) {
   // Regular expression to match major, minor, and patch components
   std::regex semverRegex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?)");
   std::smatch match;
+  std::string version_str(version);
 
-  if (std::regex_search(version, match, semverRegex)) {
+  if (std::regex_search(version_str, match, semverRegex)) {
     std::string major =
         std::to_string(std::stoll(match[1].str()));  // First number
     std::string minor = match[2].matched
@@ -32,7 +33,12 @@ std::optional<std::string> coerce(const std::string& version) {
   return std::nullopt;
 }
 
-bool compareSemVer(const std::string_view &a, const std::string &b) {
+constexpr bool is_digit(const char c) noexcept {
+  return c >= '0' && c <= '9';
+}
+
+
+bool compareSemVer(const std::string_view &a, const std::string_view &b) {
   std::vector<std::string> a_parts, b_parts;
   std::regex re(R"([.-])");  // Split on `.` or `-`
   std::sregex_token_iterator it_a(a.begin(), a.end(), re, -1), end;
@@ -45,9 +51,9 @@ bool compareSemVer(const std::string_view &a, const std::string &b) {
     b_parts.push_back(*it_b++);
   }
 
-  size_t min_size = std::min(a_parts.size(), b_parts.size());
+  auto min_size = std::min(a_parts.size(), b_parts.size());
   for (size_t i = 0; i < min_size; i++) {
-    if (std::isdigit(a_parts[i][0]) && std::isdigit(b_parts[i][0])) {
+    if (is_digit(a_parts[i][0]) && is_digit(b_parts[i][0])) {
       int num_a = std::stoi(a_parts[i]);
       int num_b = std::stoi(b_parts[i]);
       if (num_a != num_b) {
@@ -62,11 +68,12 @@ bool compareSemVer(const std::string_view &a, const std::string &b) {
   return a_parts.size() < b_parts.size();
 }
 
-std::string incrementVersion(const std::string &version) {
+std::optional<std::string> incrementVersion(std::string_view version) {
   std::regex version_regex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([\w\d.-]+))?)");
   std::smatch match;
+  std::string version_str(version);
 
-  if (std::regex_match(version, match, version_regex)) {
+  if (std::regex_match(version_str, match, version_regex)) {
     int major = std::stoi(match[1].str());
     int minor = match[2].matched ? std::stoi(match[2].str()) : 0;
     int patch = match[3].matched ? std::stoi(match[3].str()) : 0;
@@ -79,18 +86,18 @@ std::string incrementVersion(const std::string &version) {
 
     // Increase Patch version
     patch++;
-    return std::to_string(major) + "." + std::to_string(minor) + "." +
-           std::to_string(patch);
+    return major + "." + minor + "." + patch;
   }
 
-  return version;  // If not a valid version, replace
+  return std::nullopt;
 }
 
-std::string decrementVersion(const std::string &version) {
+std::optional<std::string> decrementVersion(const std::string_view version) {
   std::regex version_regex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([\w\d.-]+))?)");
   std::smatch match;
+  std::string version_str(version);
 
-  if (std::regex_match(version, match, version_regex)) {
+  if (std::regex_match(version_str, match, version_regex)) {
     int major = std::stoi(match[1].str());
     int minor = match[2].matched ? std::stoi(match[2].str()) : 0;
     int patch = match[3].matched ? std::stoi(match[3].str()) : 0;
@@ -121,59 +128,58 @@ std::string decrementVersion(const std::string &version) {
       return "0.0.0";
     }
 
-    return std::to_string(major) + "." + std::to_string(minor) + "." +
-           std::to_string(patch);
+    return major + "." + minor + "." + patch;
   }
 
-  return version;  // If not valid, replace.
+  return std::nullopt;
 }
 
 // Checks whether the candidate meets the given constraint.
-bool satisfiesConstraint(const std::string &candidate, const std::string &op,
-                         const std::string &ver) {
-  if (op == ">=") {
+bool satisfies_constraint(const std::string &candidate, const std::string &op,
+                         const std::string &version) {
+  if (op == ">") {
     // must be equal to or higher than the candidate.
-    return candidate == ver || !compareSemVer(candidate, ver);
-  } else if (op == ">") {
-    return compareSemVer(ver, candidate) && (candidate != ver);
+    return compareSemVer(version, candidate) && (candidate != version);
+  } else if (op == ">=") {
+    return candidate == version || !compareSemVer(candidate, version);
   } else if (op == "<") {
-    return compareSemVer(candidate, ver);
+    return compareSemVer(candidate, version);
   } else if (op == "<=") {
-    return candidate == ver || !compareSemVer(ver, candidate);
+    return candidate == version || !compareSemVer(version, candidate);
   }
   return false;
 }
 
-std::string computeCaretUpperBound(const std::string &version) {
+std::optional<std::string> computeCaretUpperBound(const std::string_view &version) {
   auto coercedOpt = coerce(version);
   if (!coercedOpt.has_value()) return "";
   std::string ver = *coercedOpt;
   std::vector<std::string> parts;
   std::istringstream iss(ver);
   std::string token;
-  while (std::getline(iss, token, '.')) {
+
+  while (std::getline(iss, token, '.')) { // todo!!2
     parts.push_back(token);
   }
+
   int major = std::stoi(parts[0]);
   int minor = std::stoi(parts[1]);
   int patch = std::stoi(parts[2]);
-  std::string upper;
+
   if (major > 0) {
-    upper = std::to_string(major + 1) + ".0.0";
+    return std::to_string(major + 1) + ".0.0";
   } else if (minor > 0) {
-    upper = "0." + std::to_string(minor + 1) + ".0";
-  } else {
-    upper = "0.0." + std::to_string(patch + 1);
+    return "0." + std::to_string(minor + 1) + ".0";
   }
-  return upper;
+  return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch + 1);
 }
 
 std::string computeTildeUpperBound(const std::string &version) {
   auto coercedOpt = coerce(version);
-  if (!coercedOpt.has_value()) return "";
-  std::string ver = *coercedOpt;  // For example "1.1.1"
+  if (!coercedOpt) return "";
+  std::string_view ver = coercedOpt.value();  // For example "1.1.1"
   std::vector<std::string> parts;
-  std::istringstream iss(ver);
+  std::istringstream iss(*coerced_response); //todo!!!1
   std::string token;
   while (std::getline(iss, token, '.')) {
     parts.push_back(token);
@@ -199,12 +205,7 @@ std::optional<std::string> minimum(const std::string &range) {
       R"(^\s*([\d]+(?:\.[\d]+){0,2})\s*-\s*([\d]+(?:\.[\d]+){0,2})\s*$)");
   std::smatch dash_match;
   if (std::regex_match(range, dash_match, dash_regex)) {
-    std::string lower = dash_match[1].str();
-    auto coercedOpt = coerce(lower);
-    if (coercedOpt.has_value())
-      return coercedOpt;
-    else
-      return std::nullopt;
+    return coerce(dash_match[1].str());
   }
 
   std::vector<std::string> validCandidates;
@@ -233,23 +234,23 @@ std::optional<std::string> minimum(const std::string &range) {
     std::vector<std::pair<std::string, std::string>> upperConstraints;
     for (; it != itEnd; ++it) {
       std::string op = (*it)[1].str();
-      std::string ver = (*it)[2].str();
+      std::string version = (*it)[2].str();
       if (op == "^") {
-        // For caret, add a lower constraint ">= ver" and an upper constraint
+        // For caret, add a lower constraint ">= version" and an upper constraint
         // based on caret rules.
-        lowerConstraints.push_back({">=", ver});
-        std::string upperBound = computeCaretUpperBound(ver);
-        if (!upperBound.empty()) upperConstraints.push_back({"<", upperBound});
+        lowerConstraints.push_back({">=", version});
+        auto upperBoundOpt = computeCaretUpperBound(version);
+        if (upperBoundOpt.has_value()) upperConstraints.push_back({"<", *upperBoundOpt});
       } else if (op == "~") {
         // For tilde, add a lower constraint ">= ver" and an upper constraint
         // based on tilde rules.
-        lowerConstraints.push_back({">=", ver});
-        std::string upperBound = computeTildeUpperBound(ver);
+        lowerConstraints.push_back({">=", version});
+        std::string upperBound = computeTildeUpperBound(version);
         if (!upperBound.empty()) upperConstraints.push_back({"<", upperBound});
       } else if (op == ">" || op == ">=") {
-        lowerConstraints.push_back({op, ver});
+        lowerConstraints.push_back({op, version});
       } else {
-        upperConstraints.push_back({op, ver});
+        upperConstraints.push_back({op, version});
       }
     }
 
@@ -266,7 +267,7 @@ std::optional<std::string> minimum(const std::string &range) {
         // For ">" operator, use incrementVersion; for ">=" simply use the
         // version.
         std::string cur =
-            (lc.first == ">") ? incrementVersion(lc.second) : lc.second;
+            (lc.first == ">") ? incrementVersion(lc.second).value_or(lc.second) : lc.second;
         if (candidate.empty() || compareSemVer(candidate, cur)) candidate = cur;
       }
     } else {
@@ -274,24 +275,23 @@ std::optional<std::string> minimum(const std::string &range) {
     }
 
     bool valid = true;
-    for (auto &uc : upperConstraints) {
-      std::string op = uc.first;
-      std::string ver = uc.second;
+    for (auto &[op, ver] : upperConstraints) {
       // Special case: if the constraint is "<0.0.0-beta" and the candidate is
       // "0.0.0", change the candidate to "0.0.0-0".
       if (op == "<" && ver == "0.0.0-beta" && candidate == "0.0.0") {
         candidate = "0.0.0-0";
       }
-      if (!satisfiesConstraint(candidate, op, ver)) {
+      if (!satisfies_constraint(candidate, op, ver)) {
         valid = false;
         break;
       }
     }
-    if (valid && !candidate.empty()) validCandidates.push_back(candidate);
+    if (valid && !candidate.empty()) validCandidates.push_back(candidate); //todo!33
   }
 
   if (validCandidates.empty()) return std::nullopt;
-  return *std::min_element(validCandidates.begin(), validCandidates.end(),
+    // SAFETY: This is secure because we check if input is empty beforehand.
+    return *std::min_element(validCandidates.begin(), validCandidates.end(),
                            compareSemVer);
 }
 
