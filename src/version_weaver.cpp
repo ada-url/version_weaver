@@ -32,7 +32,7 @@ std::optional<std::string> coerce(const std::string &version) {
   return std::nullopt;
 }
 
-bool compareSemVer(const std::string &a, const std::string &b) {
+bool compareSemVer(const std::string_view &a, const std::string &b) {
   std::vector<std::string> a_parts, b_parts;
   std::regex re(R"([.-])");  // Split on `.` or `-`
   std::sregex_token_iterator it_a(a.begin(), a.end(), re, -1), end;
