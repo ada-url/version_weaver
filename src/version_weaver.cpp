@@ -197,8 +197,10 @@ std::optional<std::string> minimum(const std::string &range) {
 
   // If the entire expression is just "*" (possibly with surrounding spaces),
   // return "0.0.0" directly.
-  std::regex star_regex(R"(^\s*\*\s*$)");
-  if (std::regex_match(range, star_regex)) return "0.0.0";
+  std::string_view trimmed_range = range;
+  trim_whitespace(&trimmed_range);
+  if (trimmed_range.size() == 1 && trimmed_range[0] == '*') return "0.0.0";
+
 
   // Support for the dash operator ("A - B" form)
   std::regex dash_regex(
