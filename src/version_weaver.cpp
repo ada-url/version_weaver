@@ -7,7 +7,7 @@
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
 
-std::optional<std::string> coerce(const std::string_view& version) {
+std::optional<std::string> coerce(const std::string_view &version) {
   if (version.empty()) {
     return std::nullopt;
   }
@@ -33,29 +33,36 @@ std::optional<std::string> coerce(const std::string_view& version) {
   return std::nullopt;
 }
 
-constexpr bool is_digit(const char c) noexcept {
-  return c >= '0' && c <= '9';
+constexpr bool is_digit(const char c) noexcept { return c >= '0' && c <= '9'; }
+
+std::vector<std::string_view> split(const std::string_view &s) {
+  std::vector<std::string_view> parts;
+  size_t start = 0;
+  while (start < s.size()) {
+    size_t end = s.find_first_of(".-", start);
+    if (end == std::string_view::npos) {
+      parts.push_back(s.substr(start));
+      break;
+    } else {
+      parts.push_back(s.substr(start, end - start));
+    }
+    start = end + 1;
+  }
+  return parts;
 }
 
-
 bool compareSemVer(const std::string_view &a, const std::string_view &b) {
-  std::vector<std::string> a_parts, b_parts;
-  std::regex re(R"([.-])");  // Split on `.` or `-`
-  std::sregex_token_iterator it_a(a.begin(), a.end(), re, -1), end;
-  std::sregex_token_iterator it_b(b.begin(), b.end(), re, -1);
+  auto a_parts = split(a);
+  auto b_parts = split(b);
 
-  while (it_a != end) {
-    a_parts.push_back(*it_a++);
-  }
-  while (it_b != end) {
-    b_parts.push_back(*it_b++);
-  }
-
-  auto min_size = std::min(a_parts.size(), b_parts.size());
+  size_t min_size = std::min(a_parts.size(), b_parts.size());
   for (size_t i = 0; i < min_size; i++) {
-    if (is_digit(a_parts[i][0]) && is_digit(b_parts[i][0])) {
-      int num_a = std::stoi(a_parts[i]);
-      int num_b = std::stoi(b_parts[i]);
+    bool a_is_digit = !a_parts[i].empty() && std::isdigit(a_parts[i][0]);
+    bool b_is_digit = !b_parts[i].empty() && std::isdigit(b_parts[i][0]);
+
+    if (a_is_digit && b_is_digit) {
+      int num_a = std::stoi(std::string(a_parts[i]));
+      int num_b = std::stoi(std::string(b_parts[i]));
       if (num_a != num_b) {
         return num_a < num_b;
       }
@@ -65,10 +72,12 @@ bool compareSemVer(const std::string_view &a, const std::string_view &b) {
       }
     }
   }
+
   return a_parts.size() < b_parts.size();
 }
 
 std::optional<std::string> incrementVersion(std::string_view version) {
+  // Todo: added comment for this regex
   std::regex version_regex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([\w\d.-]+))?)");
   std::smatch match;
   std::string version_str(version);
@@ -136,7 +145,7 @@ std::optional<std::string> decrementVersion(const std::string_view version) {
 
 // Checks whether the candidate meets the given constraint.
 bool satisfies_constraint(const std::string &candidate, const std::string &op,
-                         const std::string &version) {
+                          const std::string &version) {
   if (op == ">") {
     // must be equal to or higher than the candidate.
     return compareSemVer(version, candidate) && (candidate != version);
@@ -150,7 +159,8 @@ bool satisfies_constraint(const std::string &candidate, const std::string &op,
   return false;
 }
 
-std::optional<std::string> computeCaretUpperBound(const std::string_view &version) {
+std::optional<std::string> computeCaretUpperBound(
+    const std::string_view &version) {
   auto coercedOpt = coerce(version);
   if (!coercedOpt.has_value()) return "";
   std::string ver = *coercedOpt;
@@ -158,7 +168,7 @@ std::optional<std::string> computeCaretUpperBound(const std::string_view &versio
   std::istringstream iss(ver);
   std::string token;
 
-  while (std::getline(iss, token, '.')) { // todo!!2
+  while (std::getline(iss, token, '.')) {  // todo!!2
     parts.push_back(token);
   }
 
@@ -171,7 +181,8 @@ std::optional<std::string> computeCaretUpperBound(const std::string_view &versio
   } else if (minor > 0) {
     return "0." + std::to_string(minor + 1) + ".0";
   }
-  return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch + 1);
+  return std::to_string(major) + "." + std::to_string(minor) + "." +
+         std::to_string(patch + 1);
 }
 
 std::string computeTildeUpperBound(const std::string &version) {
@@ -179,7 +190,7 @@ std::string computeTildeUpperBound(const std::string &version) {
   if (!coercedOpt) return "";
   std::string_view ver = coercedOpt.value();  // For example "1.1.1"
   std::vector<std::string> parts;
-  std::istringstream iss(*coerced_response); //todo!!!1
+  std::istringstream iss(*coerced_response);  // todo!!!1
   std::string token;
   while (std::getline(iss, token, '.')) {
     parts.push_back(token);
@@ -200,7 +211,6 @@ std::optional<std::string> minimum(const std::string &range) {
   std::string_view trimmed_range = range;
   trim_whitespace(&trimmed_range);
   if (trimmed_range.size() == 1 && trimmed_range[0] == '*') return "0.0.0";
-
 
   // Support for the dash operator ("A - B" form)
   std::regex dash_regex(
@@ -238,11 +248,12 @@ std::optional<std::string> minimum(const std::string &range) {
       std::string op = (*it)[1].str();
       std::string version = (*it)[2].str();
       if (op == "^") {
-        // For caret, add a lower constraint ">= version" and an upper constraint
-        // based on caret rules.
+        // For caret, add a lower constraint ">= version" and an upper
+        // constraint based on caret rules.
         lowerConstraints.push_back({">=", version});
         auto upperBoundOpt = computeCaretUpperBound(version);
-        if (upperBoundOpt.has_value()) upperConstraints.push_back({"<", *upperBoundOpt});
+        if (upperBoundOpt.has_value())
+          upperConstraints.push_back({"<", *upperBoundOpt});
       } else if (op == "~") {
         // For tilde, add a lower constraint ">= ver" and an upper constraint
         // based on tilde rules.
@@ -268,8 +279,9 @@ std::optional<std::string> minimum(const std::string &range) {
       for (auto &lc : lowerConstraints) {
         // For ">" operator, use incrementVersion; for ">=" simply use the
         // version.
-        std::string cur =
-            (lc.first == ">") ? incrementVersion(lc.second).value_or(lc.second) : lc.second;
+        std::string cur = (lc.first == ">")
+                              ? incrementVersion(lc.second).value_or(lc.second)
+                              : lc.second;
         if (candidate.empty() || compareSemVer(candidate, cur)) candidate = cur;
       }
     } else {
@@ -288,12 +300,13 @@ std::optional<std::string> minimum(const std::string &range) {
         break;
       }
     }
-    if (valid && !candidate.empty()) validCandidates.push_back(candidate); //todo!33
+    if (valid && !candidate.empty())
+      validCandidates.push_back(candidate);  // todo!33
   }
 
   if (validCandidates.empty()) return std::nullopt;
-    // SAFETY: This is secure because we check if input is empty beforehand.
-    return *std::min_element(validCandidates.begin(), validCandidates.end(),
+  // SAFETY: This is secure because we check if input is empty beforehand.
+  return *std::min_element(validCandidates.begin(), validCandidates.end(),
                            compareSemVer);
 }
 
