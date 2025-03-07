@@ -220,16 +220,20 @@ std::string computeTildeUpperBound(const std::string_view &version) {
 
   if (!coercedOpt) return "";
 
-  std::string_view version = coercedOpt.value();  // For example "1.1.1"
   std::vector<std::string> parts;
   std::istringstream iss(*coercedOpt);
   std::string token;
 
   size_t pos = 0;
   size_t dot_pos;
-  while ((dot_pos = version.find('.', pos)) != std::string::npos) {
+  while (pos < version.size() &&
+         (dot_pos = version.find('.', pos)) != std::string::npos) {
     parts.push_back(std::string(version.substr(pos, dot_pos - pos)));
     pos = dot_pos + 1;
+  }
+
+  if (pos < version.size()) {
+    parts.push_back(std::string(version.substr(pos)));
   }
 
   int major = std::stoi(parts[0]);
