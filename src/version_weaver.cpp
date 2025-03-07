@@ -220,15 +220,15 @@ std::string computeTildeUpperBound(const std::string_view &version) {
 
   if (!coercedOpt) return "";
 
-  std::string_view ver = coercedOpt.value();  // For example "1.1.1"
+  std::string_view version = coercedOpt.value();  // For example "1.1.1"
   std::vector<std::string> parts;
   std::istringstream iss(*coercedOpt);
   std::string token;
 
   size_t pos = 0;
   size_t dot_pos;
-  while ((dot_pos = ver.find('.', pos)) != std::string::npos) {
-    parts.push_back(std::string(ver.substr(pos, dot_pos - pos)));
+  while ((dot_pos = version.find('.', pos)) != std::string::npos) {
+    parts.push_back(std::string(version.substr(pos, dot_pos - pos)));
     pos = dot_pos + 1;
   }
 
@@ -314,7 +314,7 @@ std::optional<std::string> minimum(std::string_view range) {
         if (upperBoundOpt.has_value())
           upperConstraints.push_back({"<", *upperBoundOpt});
       } else if (op == "~") {
-        // For tilde, add a lower constraint ">= ver" and an upper constraint
+        // For tilde, add a lower constraint ">= version" and an upper constraint
         // based on tilde rules.
         lowerConstraints.push_back({">=", version});
         std::string upperBound = computeTildeUpperBound(version);
@@ -347,13 +347,13 @@ std::optional<std::string> minimum(std::string_view range) {
     }
 
     bool valid = true;
-    for (auto &[op, ver] : upperConstraints) {
+    for (auto &[op, version] : upperConstraints) {
       // Special case: if the constraint is "<0.0.0-beta" and the candidate is
       // "0.0.0", change the candidate to "0.0.0-0".
-      if (op == "<" && ver == "0.0.0-beta" && candidate == "0.0.0") {
+      if (op == "<" && version == "0.0.0-beta" && candidate == "0.0.0") {
         candidate = "0.0.0-0";
       }
-      if (!satisfies_constraint(candidate, op, ver)) {
+      if (!satisfies_constraint(candidate, op, version)) {
         valid = false;
         break;
       }
