@@ -318,8 +318,8 @@ std::optional<std::string> minimum(std::string_view range) {
         if (upperBoundOpt.has_value())
           upperConstraints.push_back({"<", *upperBoundOpt});
       } else if (op == "~") {
-        // For tilde, add a lower constraint ">= version" and an upper constraint
-        // based on tilde rules.
+        // For tilde, add a lower constraint ">= version" and an upper
+        // constraint based on tilde rules.
         lowerConstraints.push_back({">=", version});
         std::string upperBound = computeTildeUpperBound(version);
         if (!upperBound.empty()) upperConstraints.push_back({"<", upperBound});
