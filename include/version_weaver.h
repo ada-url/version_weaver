@@ -13,7 +13,7 @@ static constexpr size_t MAX_VERSION_LENGTH = 256;
 bool validate(std::string_view version);
 
 bool satisfies(std::string_view version, std::string_view range);
-std::optional<std::string> coerce(const std::string& version);
+std::optional<std::string> coerce(const std::string_view version);
 std::optional<std::string> incrementVersion(std::string_view version);
 std::optional<std::string> decrementVersion(std::string_view& version);
 std::optional<std::string> minimum(std::string_view range);

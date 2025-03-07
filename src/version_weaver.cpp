@@ -77,28 +77,55 @@ bool compareSemVer(const std::string_view &a, const std::string_view &b) {
 }
 
 std::optional<std::string> incrementVersion(std::string_view version) {
-  // Todo: added comment for this regex
-  std::regex version_regex(R"((\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([\w\d.-]+))?)");
-  std::smatch match;
-  std::string version_str(version);
-
-  if (std::regex_match(version_str, match, version_regex)) {
-    int major = std::stoi(match[1].str());
-    int minor = match[2].matched ? std::stoi(match[2].str()) : 0;
-    int patch = match[3].matched ? std::stoi(match[3].str()) : 0;
-    std::string preRelease = match[4].matched ? match[4].str() : "";
-
-    if (!preRelease.empty()) {
-      return match[1].str() + "." + match[2].str() + "." + match[3].str() +
-             "-" + preRelease + ".0";
-    }
-
-    // Increase Patch version
-    patch++;
-    return major + "." + minor + "." + patch;
+  // First, we look for the '-' character to separate the pre-release part.
+  std::string_view numPart;
+  std::string_view preRelease;
+  size_t dashPos = version.find('-');
+  if (dashPos != std::string_view::npos) {
+    numPart = version.substr(0, dashPos);
+    preRelease = version.substr(dashPos + 1);
+  } else {
+    numPart = version;
   }
 
-  return std::nullopt;
+  // divides numPart by the dot ('.') character
+  std::vector<std::string_view> parts;
+  size_t start = 0;
+  while (true) {
+    size_t dotPos = numPart.find('.', start);
+    if (dotPos == std::string_view::npos) {
+      parts.push_back(numPart.substr(start));
+      break;
+    }
+    parts.push_back(numPart.substr(start, dotPos - start));
+    start = dotPos + 1;
+  }
+
+  if (parts.empty()) return std::nullopt;
+
+  int major = 0, minor = 0, patch = 0;
+  try {
+    major = std::stoi(std::string(parts[0]));
+    if (parts.size() >= 2) minor = std::stoi(std::string(parts[1]));
+    if (parts.size() >= 3) patch = std::stoi(std::string(parts[2]));
+  } catch (...) {
+    return std::nullopt;
+  }
+
+  // If there is a pre-release part, return the version in pre-release format
+  // (for example “1.2.3-beta.0”)
+  if (!preRelease.empty()) {
+    std::ostringstream oss;
+    oss << major << "." << minor << "." << patch << "-"
+        << std::string(preRelease) << ".0";
+    return oss.str();
+  }
+
+  // if there is no pre-release, increment patch and return the result.
+  patch++;
+  std::ostringstream oss;
+  oss << major << "." << minor << "." << patch;
+  return oss.str();
 }
 
 std::optional<std::string> decrementVersion(const std::string_view version) {
@@ -124,28 +151,21 @@ std::optional<std::string> decrementVersion(const std::string_view version) {
     }
 
     // Patch version to zero, but downgrade to minor or major if already 0
-    if (patch > 0) {
-      patch--;
+    if (major > 0) {
+      return std::to_string(major + 1) + ".0.0";
     } else if (minor > 0) {
-      minor--;
-      patch = 9;  // Consider the previous minor version by default.
-    } else if (major > 0) {
-      major--;
-      minor = 9;
-      patch = 9;
-    } else {
-      return "0.0.0";
+      return "0." + std::to_string(minor + 1) + ".0";
     }
-
-    return major + "." + minor + "." + patch;
+    return "0.0." + std::to_string(patch + 1);
   }
 
   return std::nullopt;
 }
 
 // Checks whether the candidate meets the given constraint.
-bool satisfies_constraint(const std::string &candidate, const std::string &op,
-                          const std::string &version) {
+bool satisfies_constraint(const std::string_view &candidate,
+                          const std::string_view &op,
+                          const std::string_view &version) {
   if (op == ">") {
     // must be equal to or higher than the candidate.
     return compareSemVer(version, candidate) && (candidate != version);
@@ -163,13 +183,23 @@ std::optional<std::string> computeCaretUpperBound(
     const std::string_view &version) {
   auto coercedOpt = coerce(version);
   if (!coercedOpt.has_value()) return "";
-  std::string ver = *coercedOpt;
+
+  const std::string_view &coerced = *coercedOpt;
   std::vector<std::string> parts;
-  std::istringstream iss(ver);
   std::string token;
 
-  while (std::getline(iss, token, '.')) {  // todo!!2
-    parts.push_back(token);
+  for (char c : coerced) {
+    if (c == '.') {
+      parts.push_back(token);
+      token.clear();
+    } else {
+      token.push_back(c);
+    }
+  }
+  parts.push_back(token);
+
+  if (parts.size() < 3) {
+    return "";
   }
 
   int major = std::stoi(parts[0]);
@@ -185,25 +215,43 @@ std::optional<std::string> computeCaretUpperBound(
          std::to_string(patch + 1);
 }
 
-std::string computeTildeUpperBound(const std::string &version) {
+std::string computeTildeUpperBound(const std::string_view &version) {
   auto coercedOpt = coerce(version);
+
   if (!coercedOpt) return "";
+
   std::string_view ver = coercedOpt.value();  // For example "1.1.1"
   std::vector<std::string> parts;
-  std::istringstream iss(*coerced_response);  // todo!!!1
+  std::istringstream iss(*coercedOpt);
   std::string token;
-  while (std::getline(iss, token, '.')) {
-    parts.push_back(token);
+
+  size_t pos = 0;
+  size_t dot_pos;
+  while ((dot_pos = ver.find('.', pos)) != std::string::npos) {
+    parts.push_back(std::string(ver.substr(pos, dot_pos - pos)));
+    pos = dot_pos + 1;
   }
+
   int major = std::stoi(parts[0]);
   int minor = std::stoi(parts[1]);
+
   // Upper bound for Tilde: X.(Y+1).0
   std::string upper =
       std::to_string(major) + "." + std::to_string(minor + 1) + ".0";
   return upper;
 }
+constexpr inline void trim_whitespace(std::string_view *input) noexcept {
+  constexpr std::string_view whitespace = " \t\n\r\f\v";
+  size_t start = input->find_first_not_of(whitespace);
+  if (start == std::string_view::npos) {  // If all characters are spaces
+    *input = {};
+    return;
+  }
+  size_t end = input->find_last_not_of(whitespace);
+  *input = input->substr(start, end - start + 1);
+}
 
-std::optional<std::string> minimum(const std::string &range) {
+std::optional<std::string> minimum(std::string_view range) {
   if (range.empty()) return std::nullopt;
 
   // If the entire expression is just "*" (possibly with surrounding spaces),
@@ -216,14 +264,19 @@ std::optional<std::string> minimum(const std::string &range) {
   std::regex dash_regex(
       R"(^\s*([\d]+(?:\.[\d]+){0,2})\s*-\s*([\d]+(?:\.[\d]+){0,2})\s*$)");
   std::smatch dash_match;
-  if (std::regex_match(range, dash_match, dash_regex)) {
+  std::string range_str(range);
+  if (std::regex_match(range_str, dash_match, dash_regex)) {
     return coerce(dash_match[1].str());
   }
 
-  std::vector<std::string> validCandidates;
+  std::optional<std::string> bestCandidate;
   std::regex or_regex(R"(\s*\|\|\s*)");
-  std::sregex_token_iterator subIt(range.begin(), range.end(), or_regex, -1);
+  std::regex star_regex(R"(^\*$)");
+
+  std::sregex_token_iterator subIt(range_str.begin(), range_str.end(), or_regex,
+                                   -1);
   std::sregex_token_iterator subEnd;
+
   for (; subIt != subEnd; ++subIt) {
     std::string subRange = subIt->str();
     // Trim whitespace from the beginning and end
@@ -234,8 +287,11 @@ std::optional<std::string> minimum(const std::string &range) {
 
     // If the sub-range is a star, the candidate is "0.0.0"
     if (std::regex_match(subRange, star_regex)) {
-      validCandidates.push_back("0.0.0");
-      continue;
+      if (!bestCandidate.has_value() ||
+          compareSemVer("0.0.0", *bestCandidate)) {
+        bestCandidate = "0.0.0";
+        continue;
+      }
     }
 
     // Capture constraints; includes "^" and "~" operators.
@@ -244,6 +300,9 @@ std::optional<std::string> minimum(const std::string &range) {
     std::sregex_iterator itEnd;
     std::vector<std::pair<std::string, std::string>> lowerConstraints;
     std::vector<std::pair<std::string, std::string>> upperConstraints;
+
+    std::string candidate;
+
     for (; it != itEnd; ++it) {
       std::string op = (*it)[1].str();
       std::string version = (*it)[2].str();
@@ -267,7 +326,6 @@ std::optional<std::string> minimum(const std::string &range) {
       }
     }
 
-    std::string candidate;
     std::regex anyConstraint(R"(>=|>|<=|<|\^|~)");
     // If there are no constraints in the sub-range (e.g., "1.0.x", "1.x",
     // "=1.0.0", etc.), then the candidate is the normalized form of the
@@ -300,23 +358,14 @@ std::optional<std::string> minimum(const std::string &range) {
         break;
       }
     }
-    if (valid && !candidate.empty())
-      validCandidates.push_back(candidate);  // todo!33
+    if (valid && !candidate.empty()) {
+      if (!bestCandidate.has_value() ||
+          compareSemVer(candidate, *bestCandidate))
+        bestCandidate = candidate;
+    }
   }
 
-  if (validCandidates.empty()) return std::nullopt;
-  // SAFETY: This is secure because we check if input is empty beforehand.
-  return *std::min_element(validCandidates.begin(), validCandidates.end(),
-                           compareSemVer);
-}
-
-constexpr inline void trim_whitespace(std::string_view *input) noexcept {
-  while (!input->empty() && std::isspace(input->front())) {
-    input->remove_prefix(1);
-  }
-  while (!input->empty() && std::isspace(input->back())) {
-    input->remove_suffix(1);
-  }
+  return bestCandidate;
 }
 
 constexpr inline bool contains_only_digits(std::string_view input) noexcept {
