@@ -62,6 +62,27 @@ enum parse_error {
 std::expected<version, parse_error> clean(std::string_view input);
 
 std::expected<version, parse_error> parse(std::string_view version);
+
+enum release_type {
+  MAJOR,
+  MINOR,
+  PATCH,
+  // TODO: also support
+  //  - PRE_MAJOR
+  //  - PRE_MINOR
+  //  - PRE_PATCH
+  //  - PRE_RELEASE
+  //  - RELEASE
+};
+
+enum inc_error {
+  INVALID_MAJOR,
+  INVALID_MINOR,
+  INVALID_PATCH,
+  INVALID_RELEASE_TYPE,
+};
+
+std::expected<version, inc_error> inc(version version, release_type release_type);
 }  // namespace version_weaver
 
 // https://semver.org/#spec-item-11
