@@ -33,6 +33,51 @@ std::optional<std::string> coerce(const std::string& version) {
 
 std::string minimum(std::string_view range) { return ""; }
 
+std::expected<version, inc_error> inc(version input, release_type release_type) {
+  switch (release_type) {
+    case MAJOR: {
+      int major_int;
+      try {
+        major_int = std::stoi(std::string(input.major));
+      } catch (...) {
+        return std::unexpected(inc_error::INVALID_MAJOR);
+      }
+      auto incremented_major_int = major_int + 1;
+      std::string_view incremented_major(std::to_string(incremented_major_int));
+      return version_weaver::version{incremented_major, "0", "0"};
+    }
+    case MINOR: {
+      int minor_int;
+      try {
+        minor_int = std::stoi(std::string(input.minor));
+      } catch (...) {
+        return std::unexpected(inc_error::INVALID_MINOR);
+      }
+      auto incremented_minor_int = minor_int + 1;
+      std::string_view incremented_minor(std::to_string(incremented_minor_int));
+      return version_weaver::version{input.major, incremented_minor, "0"};
+    }
+    case PATCH: {
+      auto dash_post = input.patch.find("-");
+      if (dash_post != std::string::npos) {
+        auto incremented_patch = input.patch.substr(0, dash_post);
+        return version_weaver::version{input.major, input.minor, incremented_patch};
+      }
+      int patch_int;
+      try {
+        patch_int = std::stoi(std::string(input.patch));
+      } catch (...) {
+        return std::unexpected(inc_error::INVALID_PATCH);
+      }
+      auto incremented_patch_int = patch_int + 1;
+      std::string_view incremented_patch(std::to_string(incremented_patch_int));
+      return version_weaver::version{input.major, input.minor, incremented_patch};
+    }
+    default:
+      return std::unexpected(inc_error::INVALID_RELEASE_TYPE);
+  }
+}
+
 constexpr inline void trim_whitespace(std::string_view* input) noexcept {
   while (!input->empty() && std::isspace(input->front())) {
     input->remove_prefix(1);
