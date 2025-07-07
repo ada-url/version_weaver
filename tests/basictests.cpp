@@ -71,7 +71,6 @@ std::vector<TestData> clean_values = {
 TEST(basictests, clean) {
   for (const auto& [input, expected] : clean_values) {
     auto cleaned_result = version_weaver::clean(input);
-    std::printf("input: %s\n", input.c_str());
     ASSERT_EQ(cleaned_result.has_value(), expected.has_value());
     if (cleaned_result.has_value()) {
       ASSERT_EQ(cleaned_result->major, expected->major);
@@ -186,41 +185,81 @@ TEST(basictests, coerce) {
 }
 
 using IncTestData = std::tuple<
-  version_weaver::version,
-  version_weaver::release_type,
-  std::expected<version_weaver::version, version_weaver::inc_error>
->;
+    version_weaver::version, std::string, version_weaver::release_type,
+    std::string,
+    std::expected<version_weaver::version, version_weaver::parse_error>>;
 
 std::vector<IncTestData> inc_values = {
-    {version_weaver::version{"1", "2", "3"}, version_weaver::release_type::MAJOR, version_weaver::version{"2", "0", "0"}},
-    {version_weaver::version{"1", "2", "3"}, version_weaver::release_type::MINOR, version_weaver::version{"1", "3", "0"}},
-    {version_weaver::version{"1", "2", "3"}, version_weaver::release_type::PATCH, version_weaver::version{"1", "2", "4"}},
-    {version_weaver::version{"1", "2", "3tag"}, version_weaver::release_type::MAJOR, version_weaver::version{"2", "0", "0"}},
-    {version_weaver::version{"1", "2", "3-tag"}, version_weaver::release_type::MAJOR, version_weaver::version{"2", "0", "0"}},
-    {version_weaver::version{"1", "2", "3"}, static_cast<version_weaver::release_type>(-1), std::unexpected(version_weaver::inc_error::INVALID_RELEASE_TYPE)},
-    {version_weaver::version{"1", "2", "0-0"}, version_weaver::release_type::PATCH, version_weaver::version{"1", "2", "0"}},
-    {version_weaver::version{"fake"}, version_weaver::release_type::MAJOR, std::unexpected(version_weaver::inc_error::INVALID_MAJOR)},
-    {version_weaver::version{"1", "2", "3-4"}, version_weaver::release_type::MAJOR, version_weaver::version{"2", "0", "0"}},
-    {version_weaver::version{"1", "2", "3-4"}, version_weaver::release_type::MINOR, version_weaver::version{"1", "3", "0"}},
-    {version_weaver::version{"1", "2", "3-4"}, version_weaver::release_type::PATCH, version_weaver::version{"1", "2", "3"}},
-    {version_weaver::version{"1", "2", "3-alpha.0.beta"}, version_weaver::release_type::MAJOR, version_weaver::version{"2", "0", "0"}},
-    {version_weaver::version{"1", "2", "3-alpha.0.beta"}, version_weaver::release_type::MINOR, version_weaver::version{"1", "3", "0"}},
-    {version_weaver::version{"1", "2", "3-alpha.0.beta"}, version_weaver::release_type::PATCH, version_weaver::version{"1", "2", "3"}},
+    {version_weaver::version{"1", "2", "3"}, "1.2.3",
+     version_weaver::release_type::MAJOR, "2.0.0",
+     version_weaver::version{"2", "0", "0"}},
+    {version_weaver::version{"1", "2", "3"}, "1.2.3",
+     version_weaver::release_type::MINOR, "1.3.0",
+     version_weaver::version{"1", "3", "0"}},
+    {version_weaver::version{"1", "2", "3"}, "1.2.3",
+     version_weaver::release_type::PATCH, "1.2.4",
+     version_weaver::version{"1", "2", "4"}},
+    {version_weaver::version{"1", "2", "3", "tag"}, "1.2.3-tag",
+     version_weaver::release_type::MAJOR, "2.0.0",
+     version_weaver::version{"2", "0", "0"}},
+    {version_weaver::version{"1", "2", "3"}, "1.2.3",
+     static_cast<version_weaver::release_type>(-1), "",
+     std::unexpected(version_weaver::parse_error::INVALID_RELEASE_TYPE)},
+    {version_weaver::version{"1", "2", "0", "0"}, "1.2.0-0",
+     version_weaver::release_type::PATCH, "1.2.0",
+     version_weaver::version{"1", "2", "0"}},
+    {version_weaver::version{"fake"}, "fake",
+     version_weaver::release_type::MAJOR, "",
+     std::unexpected(version_weaver::parse_error::INVALID_MAJOR)},
+    {version_weaver::version{"1", "2", "3", "4"}, "1.2.3-4",
+     version_weaver::release_type::MAJOR, "2.0.0",
+     version_weaver::version{"2", "0", "0"}},
+    {version_weaver::version{"1", "2", "3", "4"}, "1.2.3-4",
+     version_weaver::release_type::MINOR, "1.3.0",
+     version_weaver::version{"1", "3", "0"}},
+    {version_weaver::version{"1", "2", "3", "4"}, "1.2.3-4",
+     version_weaver::release_type::PATCH, "1.2.3",
+     version_weaver::version{"1", "2", "3"}},
+    {version_weaver::version{"1", "2", "3", "alpha.0.beta"}, "1.2.3-alpha.0.beta",
+     version_weaver::release_type::MAJOR, "2.0.0",
+     version_weaver::version{"2", "0", "0"}},
+    {version_weaver::version{"1", "2", "3", "alpha.0.beta"}, "1.2.3-alpha.0.beta",
+     version_weaver::release_type::MINOR, "1.3.0",
+     version_weaver::version{"1", "3", "0"}},
+    {version_weaver::version{"1", "2", "3", "alpha.0.beta"}, "1.2.3-alpha.0.beta",
+     version_weaver::release_type::PATCH, "1.2.3",
+     version_weaver::version{"1", "2", "3"}},
 };
 
 TEST(basictests, inc) {
-  for (const auto& [input, release_type, expected] : inc_values) {
-    auto incremented = version_weaver::inc(input, release_type);
-
-    ASSERT_EQ(incremented.has_value(), expected.has_value());
-    if (incremented.has_value()) {
+  for (const auto& [input, inputstr, release_type, str, expected] :
+       inc_values) {
+    auto incremented_str = version_weaver::inc(input, release_type);
+    ASSERT_EQ(incremented_str.has_value(), expected.has_value());
+    if (incremented_str.has_value()) {
+      ASSERT_EQ(*incremented_str, str);
+      auto incremented = version_weaver::parse(*incremented_str);
+      ASSERT_TRUE(incremented.has_value());
       ASSERT_EQ(incremented->major, expected->major);
       ASSERT_EQ(incremented->minor, expected->minor);
       ASSERT_EQ(incremented->patch, expected->patch);
       ASSERT_EQ(incremented->pre_release, expected->pre_release);
       ASSERT_EQ(incremented->build, expected->build);
     } else {
-      ASSERT_EQ(incremented.error(), expected.error());
+      ASSERT_EQ(incremented_str.error(), expected.error());
+    }
+  }
+
+  SUCCEED();
+}
+
+TEST(basictests, plus) {
+  for (const auto& [input, inputstr, release_type, str, expected] :
+       inc_values) {
+    auto incremented_str = inputstr + release_type;
+    ASSERT_EQ(incremented_str.has_value(), expected.has_value());
+    if (incremented_str.has_value()) {
+      ASSERT_EQ(*incremented_str, str);
     }
   }
 

@@ -10,6 +10,18 @@ namespace version_weaver {
 // https://semver.org/#does-semver-have-a-size-limit-on-the-version-string
 static constexpr size_t MAX_VERSION_LENGTH = 256;
 
+// Validate a version string.
+// A valid version string MUST be a non-empty string of characters that
+// conform to the grammar:
+// version       ::= major '.' minor '.' patch [ '-' pre-release ] [ '+' build ]
+// major         ::= non-zero-digit *digit
+// minor         ::= non-zero-digit *digit
+// patch         ::= non-zero-digit *digit
+// pre-release   ::= identifier *('.' identifier)
+// identifier    ::= non-zero-digit *digit / alpha / alpha-numeric
+// build         ::= identifier *('.' identifier)
+// non-zero-digit ::= '1' / '2' / '3' / '4' / '5' / '6' / '7' / '8' / '9'
+// digit         ::= '0' / non-zero-digit
 bool validate(std::string_view version);
 
 bool satisfies(std::string_view version, std::string_view range);
@@ -49,11 +61,27 @@ struct version {
   // Examples: 1.0.0-alpha+001, 1.0.0+20130313144700, 1.0.0-beta+exp.sha.5114f85,
   // 1.0.0+21AF26D3----117B344092BD.
   std::optional<std::string_view> build;
+
+  inline operator std::string() const {
+    std::string result = std::string(major) + "." + std::string(minor) + "." +
+                         std::string(patch);
+    if (pre_release.has_value()) {
+      result += "-" + std::string(pre_release.value());
+    }
+    if (build.has_value()) {
+      result += "+" + std::string(build.value());
+    }
+    return result;
+  }
 };
 
 enum parse_error {
   VERSION_LARGER_THAN_MAX_LENGTH,
   INVALID_INPUT,
+  INVALID_MAJOR,
+  INVALID_MINOR,
+  INVALID_PATCH,
+  INVALID_RELEASE_TYPE,
 };
 
 // This will return a cleaned and trimmed semver version.
@@ -75,14 +103,29 @@ enum release_type {
   //  - RELEASE
 };
 
-enum inc_error {
-  INVALID_MAJOR,
-  INVALID_MINOR,
-  INVALID_PATCH,
-  INVALID_RELEASE_TYPE,
-};
+// Increment the version according to the provided release type.
+std::expected<std::string, parse_error> inc(version input,
+                                            release_type release_type);
 
-std::expected<version, inc_error> inc(version version, release_type release_type);
+inline std::expected<std::string, parse_error> increment(
+    std::string_view input, release_type release_type) {
+  auto parts = parse(input);
+  if (!parts.has_value()) {
+    return std::unexpected(parts.error());
+  }
+  return inc(parts.value(), release_type);
+}
+
+inline std::expected<std::string, parse_error> operator+(
+    std::string_view lhs, const release_type& rhs) {
+  return increment(lhs, rhs);
+}
+
+inline std::expected<std::string, parse_error> operator+(
+    const std::string& lhs, const release_type& rhs) {
+  return operator+(std::string_view(lhs), rhs);
+}
+
 }  // namespace version_weaver
 
 // https://semver.org/#spec-item-11
