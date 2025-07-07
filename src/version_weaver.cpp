@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cctype>
 #include <regex>
+#include <charconv>
 
 namespace version_weaver {
 bool validate(std::string_view version) { return parse(version).has_value(); }
@@ -33,48 +34,51 @@ std::optional<std::string> coerce(const std::string& version) {
 
 std::string minimum(std::string_view range) { return ""; }
 
-std::expected<version, inc_error> inc(version input, release_type release_type) {
+std::expected<std::string, parse_error> inc(version input,
+                                            release_type release_type) {
   switch (release_type) {
     case MAJOR: {
       int major_int;
-      try {
-        major_int = std::stoi(std::string(input.major));
-      } catch (...) {
-        return std::unexpected(inc_error::INVALID_MAJOR);
+      auto [ptr, ec] =
+          std::from_chars(input.major.data(),
+                          input.major.data() + input.major.size(), major_int);
+      if (ec != std::errc()) {
+        return std::unexpected(parse_error::INVALID_MAJOR);
       }
       auto incremented_major_int = major_int + 1;
-      std::string_view incremented_major(std::to_string(incremented_major_int));
-      return version_weaver::version{incremented_major, "0", "0"};
+      auto major = std::to_string(incremented_major_int);
+      auto new_version = version_weaver::version{major, "0", "0"};
+      return new_version;
     }
     case MINOR: {
       int minor_int;
-      try {
-        minor_int = std::stoi(std::string(input.minor));
-      } catch (...) {
-        return std::unexpected(inc_error::INVALID_MINOR);
+      auto [ptr, ec] =
+          std::from_chars(input.minor.data(),
+                          input.minor.data() + input.minor.size(), minor_int);
+      if (ec != std::errc()) {
+        return std::unexpected(parse_error::INVALID_MINOR);
       }
       auto incremented_minor_int = minor_int + 1;
-      std::string_view incremented_minor(std::to_string(incremented_minor_int));
-      return version_weaver::version{input.major, incremented_minor, "0"};
+      return version_weaver::version{
+          input.major, std::to_string(incremented_minor_int), "0"};
     }
     case PATCH: {
-      auto dash_post = input.patch.find("-");
-      if (dash_post != std::string::npos) {
-        auto incremented_patch = input.patch.substr(0, dash_post);
-        return version_weaver::version{input.major, input.minor, incremented_patch};
+      if (input.pre_release) {
+        return version_weaver::version{input.major, input.minor, input.patch};
       }
       int patch_int;
-      try {
-        patch_int = std::stoi(std::string(input.patch));
-      } catch (...) {
-        return std::unexpected(inc_error::INVALID_PATCH);
+      auto [ptr, ec] =
+          std::from_chars(input.patch.data(),
+                          input.patch.data() + input.patch.size(), patch_int);
+      if (ec != std::errc()) {
+        return std::unexpected(parse_error::INVALID_PATCH);
       }
       auto incremented_patch_int = patch_int + 1;
-      std::string_view incremented_patch(std::to_string(incremented_patch_int));
-      return version_weaver::version{input.major, input.minor, incremented_patch};
+      return version_weaver::version{input.major, input.minor,
+                                     std::to_string(incremented_patch_int)};
     }
     default:
-      return std::unexpected(inc_error::INVALID_RELEASE_TYPE);
+      return std::unexpected(parse_error::INVALID_RELEASE_TYPE);
   }
 }
 
@@ -162,6 +166,7 @@ std::expected<version, parse_error> parse(std::string_view input) {
     return std::unexpected(parse_error::INVALID_INPUT);
   }
   version.patch = patch;
+
   if (dot_iterator == std::string_view::npos) {
     return version;
   }
