@@ -39,7 +39,9 @@ std::expected<std::string, parse_error> inc(version input,
   switch (release_type) {
     case MAJOR: {
       int major_int;
-      auto [ptr, ec] = std::from_chars(input.major.data(), input.major.data() + input.major.size(), major_int);
+      auto [ptr, ec] =
+          std::from_chars(input.major.data(),
+                          input.major.data() + input.major.size(), major_int);
       if (ec != std::errc()) {
         return std::unexpected(parse_error::INVALID_MAJOR);
       }
@@ -50,7 +52,9 @@ std::expected<std::string, parse_error> inc(version input,
     }
     case MINOR: {
       int minor_int;
-      auto [ptr, ec] = std::from_chars(input.minor.data(), input.minor.data() + input.minor.size(), minor_int);
+      auto [ptr, ec] =
+          std::from_chars(input.minor.data(),
+                          input.minor.data() + input.minor.size(), minor_int);
       if (ec != std::errc()) {
         return std::unexpected(parse_error::INVALID_MINOR);
       }
@@ -63,7 +67,9 @@ std::expected<std::string, parse_error> inc(version input,
         return version_weaver::version{input.major, input.minor, input.patch};
       }
       int patch_int;
-      auto [ptr, ec] = std::from_chars(input.patch.data(), input.patch.data() + input.patch.size(), patch_int);
+      auto [ptr, ec] =
+          std::from_chars(input.patch.data(),
+                          input.patch.data() + input.patch.size(), patch_int);
       if (ec != std::errc()) {
         return std::unexpected(parse_error::INVALID_PATCH);
       }
