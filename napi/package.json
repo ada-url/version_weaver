@@ -1,0 +1,17 @@
+{
+  "name": "node-version-weaver",
+  "description": "N-API port of node-semver",
+  "dependencies": {
+    "bindings": "~1.5.0",
+    "node-addon-api": "^8.3.0"
+  },
+  "scripts": {
+    "build": "cmake-js --prefer-make compile",
+    "test": "tap build/test -d./tap_output --no-coverage || true && node compare_test_status.mjs"
+  },
+  "devDependencies": {
+    "cmake-js": "^7.3.0",
+    "tap": "^16.0.0"
+  },
+  "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728"
+}

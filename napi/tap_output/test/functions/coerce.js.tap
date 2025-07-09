@@ -1,0 +1,18 @@
+    ok 1 - coerce(null) should be null
+    ok 2 - coerce([object Object]) should be null
+    ok 3 - coerce(function () {       return '1.2.3'     }) should be null
+    ok 4 - coerce() should be null
+    ok 5 - coerce(.) should be null
+    ok 6 - coerce(version one) should be null
+    not ok 7 - coerce(9999999999999999) should be null
+    not ok 8 - coerce(11111111111111111) should be null
+    not ok 9 - coerce(a9999999999999999) should be null
+    not ok 10 - coerce(a11111111111111111) should be null
+    not ok 11 - coerce(9999999999999999a) should be null
+    not ok 12 - coerce(11111111111111111a) should be null
+    not ok 13 - coerce(9999999999999999.4.7.4) should be null
+    not ok 14 - coerce(9999999999999999.2222222222222222.3333333333333333) should be null
+    not ok 15 - coerce(1111111111111111.9999999999999999.3333333333333333) should be null
+    not ok 16 - coerce(1111111111111111.2222222222222222.9999999999999999) should be null
+    not ok 17 - parse is not a function
+not ok 1 - coerce tests 

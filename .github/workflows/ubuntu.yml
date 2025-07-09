@@ -20,6 +20,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  YARN_ENABLE_GLOBAL_CACHE: false
+
 jobs:
   ubuntu-build:
     runs-on: ubuntu-24.04
