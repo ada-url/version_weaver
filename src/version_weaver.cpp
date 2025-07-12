@@ -83,6 +83,12 @@ std::expected<std::string, parse_error> inc(version input,
                                        std::to_string(incremented_patch_int)};
       break;
     }
+    case RELEASE: {
+      if (!input.pre_release.has_value()) {
+        return std::unexpected(parse_error::INVALID_INPUT);
+      }
+      return version_weaver::version{input.major, input.minor, input.patch};
+    };
     default:
       return std::unexpected(parse_error::INVALID_RELEASE_TYPE);
   }

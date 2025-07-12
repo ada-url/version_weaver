@@ -98,8 +98,8 @@ enum release_type {
   PRE_MAJOR,
   PRE_MINOR,
   PRE_PATCH,
+  RELEASE,
   // TODO: also support
-  //  - RELEASE
   //  - PRE_RELEASE
 };
 
