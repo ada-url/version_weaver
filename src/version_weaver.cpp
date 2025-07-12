@@ -68,9 +68,28 @@ std::expected<std::string, parse_error> inc(version input,
       break;
     }
     case PATCH:
-    case PRE_PATCH: {
-      if (input.pre_release && release_type != PRE_PATCH) {
+    case PRE_PATCH:
+    case PRE_RELEASE: {
+      if (input.pre_release.has_value() && release_type == PATCH) {
         return version_weaver::version{input.major, input.minor, input.patch};
+      }
+      if (release_type == PRE_RELEASE && input.pre_release.has_value()) {
+        // TODO: support non-int pre_releases as well
+        //       (see:
+        //       https://github.com/npm/node-semver/blob/d17aebf8/test/fixtures/increments.js#L22-L36)
+        auto pre_release_value = input.pre_release.value();
+        int prerelease_int;
+        auto [ptr, ec] =
+            std::from_chars(pre_release_value.data(),
+                            pre_release_value.data() + pre_release_value.size(),
+                            prerelease_int);
+        if (ec != std::errc()) {
+          return std::unexpected(parse_error::INVALID_PRERELEASE);
+        }
+        auto incremented_prerelease_int = prerelease_int + 1;
+        incremented = std::move(std::to_string(incremented_prerelease_int));
+        return version_weaver::version{input.major, input.minor, input.patch,
+                                       incremented};
       }
       int patch_int;
       auto [ptr, ec] =
@@ -95,7 +114,7 @@ std::expected<std::string, parse_error> inc(version input,
   }
 
   if (release_type == PRE_MAJOR || release_type == PRE_MINOR ||
-      release_type == PRE_PATCH) {
+      release_type == PRE_PATCH || release_type == PRE_RELEASE) {
     result.pre_release = "0";
   }
 

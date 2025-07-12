@@ -256,6 +256,12 @@ std::vector<IncTestData> inc_values = {
     {version_weaver::version{"1", "2", "3"}, "1.2.3",
      version_weaver::release_type::RELEASE, "1.2.3",
      std::unexpected(version_weaver::parse_error::INVALID_INPUT)},
+    {version_weaver::version{"1", "2", "4"}, "1.2.4",
+     version_weaver::release_type::PRE_RELEASE, "1.2.5-0",
+     version_weaver::version{"1", "2", "5", "0"}},
+    {version_weaver::version{"1", "2", "3", "0"}, "1.2.3-0",
+     version_weaver::release_type::PRE_RELEASE, "1.2.3-1",
+     version_weaver::version{"1", "2", "3", "1"}},
 };
 
 TEST(basictests, inc) {
