@@ -117,7 +117,7 @@ std::expected<std::string, parse_error> inc(version input,
     result.pre_release = "0";
   }
 
-  return result;
+  return std::string(result).c_str();
 }
 
 constexpr inline void trim_whitespace(std::string_view* input) noexcept {
