@@ -95,12 +95,12 @@ enum release_type {
   MAJOR,
   MINOR,
   PATCH,
+  PRE_MAJOR,
+  PRE_MINOR,
+  PRE_PATCH,
   // TODO: also support
-  //  - PRE_MAJOR
-  //  - PRE_MINOR
-  //  - PRE_PATCH
-  //  - PRE_RELEASE
   //  - RELEASE
+  //  - PRE_RELEASE
 };
 
 // Increment the version according to the provided release type.
