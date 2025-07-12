@@ -36,8 +36,11 @@ std::string minimum(std::string_view range) { return ""; }
 
 std::expected<std::string, parse_error> inc(version input,
                                             release_type release_type) {
+  version_weaver::version result;
+  std::string incremented;
   switch (release_type) {
-    case MAJOR: {
+    case MAJOR:
+    case PRE_MAJOR: {
       int major_int;
       auto [ptr, ec] =
           std::from_chars(input.major.data(),
@@ -46,11 +49,12 @@ std::expected<std::string, parse_error> inc(version input,
         return std::unexpected(parse_error::INVALID_MAJOR);
       }
       auto incremented_major_int = major_int + 1;
-      auto major = std::to_string(incremented_major_int);
-      auto new_version = version_weaver::version{major, "0", "0"};
-      return new_version;
+      incremented = std::move(std::to_string(incremented_major_int));
+      result = version_weaver::version{incremented, "0", "0"};
+      break;
     }
-    case MINOR: {
+    case MINOR:
+    case PRE_MINOR: {
       int minor_int;
       auto [ptr, ec] =
           std::from_chars(input.minor.data(),
@@ -59,11 +63,13 @@ std::expected<std::string, parse_error> inc(version input,
         return std::unexpected(parse_error::INVALID_MINOR);
       }
       auto incremented_minor_int = minor_int + 1;
-      return version_weaver::version{
-          input.major, std::to_string(incremented_minor_int), "0"};
+      incremented = std::move(std::to_string(incremented_minor_int));
+      result = version_weaver::version{input.major, incremented, "0"};
+      break;
     }
-    case PATCH: {
-      if (input.pre_release) {
+    case PATCH:
+    case PRE_PATCH: {
+      if (input.pre_release && release_type != PRE_PATCH) {
         return version_weaver::version{input.major, input.minor, input.patch};
       }
       int patch_int;
@@ -74,12 +80,20 @@ std::expected<std::string, parse_error> inc(version input,
         return std::unexpected(parse_error::INVALID_PATCH);
       }
       auto incremented_patch_int = patch_int + 1;
-      return version_weaver::version{input.major, input.minor,
-                                     std::to_string(incremented_patch_int)};
+      incremented = std::move(std::to_string(incremented_patch_int));
+      result = version_weaver::version{input.major, input.minor, incremented};
+      break;
     }
     default:
       return std::unexpected(parse_error::INVALID_RELEASE_TYPE);
   }
+
+  if (release_type == PRE_MAJOR || release_type == PRE_MINOR ||
+      release_type == PRE_PATCH) {
+    result.pre_release = "0";
+  }
+
+  return result;
 }
 
 constexpr inline void trim_whitespace(std::string_view* input) noexcept {
