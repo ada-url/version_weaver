@@ -265,3 +265,80 @@ TEST(basictests, plus) {
 
   SUCCEED();
 }
+
+using MinimumData = std::pair<std::string, std::optional<std::string>>;
+std::vector<MinimumData> min_version_value = {
+    // Stars
+    {"*", "0.0.0"},
+    {"* || >=2", "0.0.0"},
+    {">=2 || *", "0.0.0"},
+    {">2 || *", "0.0.0"},
+
+    // Equal
+    {"1.0.0", "1.0.0"},
+    {"1.0", "1.0.0"},
+    {"1.0.x", "1.0.0"},
+    {"1.0.*", "1.0.0"},
+    {"1", "1.0.0"},
+    {"1.x.x", "1.0.0"},
+    {"1.*.x", "1.0.0"},
+    {"1.x.*", "1.0.0"},
+    {"1.x", "1.0.0"},
+    {"1.*", "1.0.0"},
+    {"=1.0.0", "1.0.0"},
+
+    // // Tilde
+    {"~1.1.1", "1.1.1"},
+    {"~1.1.1-beta", "1.1.1-beta"},
+    {"~1.1.1 || >=2", "1.1.1"},
+
+    // // Caret
+    {"^1.1.1", "1.1.1"},
+    {"^1.1.1-beta", "1.1.1-beta"},
+    {"^1.1.1 || >=2", "1.1.1"},
+    {"^2.16.2 ^2.16", "2.16.2"},
+
+    // // '-' operator
+    {"1.1.1 - 1.8.0", "1.1.1"},
+    {"1.1 - 1.8.0", "1.1.0"},
+
+    // // Less / less or equal
+    {"<2", "0.0.0"},
+    {"<0.0.0-beta", "0.0.0-0"},
+    {"<0.0.1-beta", "0.0.0"},
+    {"<2 || >4", "0.0.0"},
+    {">4 || <2", "0.0.0"},
+    {"<=2 || >=4", "0.0.0"},
+    {">=4 || <=2", "0.0.0"},
+    {"<0.0.0-beta >0.0.0-alpha", "0.0.0-alpha.0"},
+    {">0.0.0-alpha <0.0.0-beta", "0.0.0-alpha.0"},
+
+    // Greater than or equal
+    {">=1.1.1 <2 || >=2.2.2 <2", "1.1.1"},
+    {">=2.2.2 <2 || >=1.1.1 <2", "1.1.1"},
+
+    // Greater than but not equal
+    {">1.0.0", "1.0.1"},
+    {">1.0.0-0", "1.0.0-0.0"},
+    {">1.0.0-beta", "1.0.0-beta.0"},
+    {">2 || >1.0.0", "1.0.1"},
+    {">2 || >1.0.0-0", "1.0.0-0.0"},
+    {">2 || >1.0.0-beta", "1.0.0-beta.0"},
+
+    // Impossible range
+    {">4 <3", std::nullopt},
+
+    {"", std::nullopt}};
+
+TEST(basictests, minimum) {
+  for (const auto& [input, expected] : min_version_value) {
+    auto result = version_weaver::minimum(input);
+    if (expected) {
+      std::cout << "expected.value()" << expected.value() << std::endl;
+      std::cout << "result" << result.value_or("nullopt") << std::endl;
+      ASSERT_EQ(result, expected.value());
+    } else {
+      ASSERT_FALSE(result.has_value());
+    }
+  }
+}
