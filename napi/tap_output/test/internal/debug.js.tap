@@ -1,0 +1,8 @@
+    not ok 1 - success exit status
+    ok 2 - no signal
+    not ok 3 - got no output
+not ok 1 - without env set 
+    not ok 1 - success exit status
+    ok 2 - no signal
+    not ok 3 - got expected output
+not ok 2 - with env set 
