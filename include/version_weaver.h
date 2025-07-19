@@ -83,6 +83,7 @@ enum parse_error {
   INVALID_MAJOR,
   INVALID_MINOR,
   INVALID_PATCH,
+  INVALID_PRERELEASE,
   INVALID_RELEASE_TYPE,
 };
 
@@ -97,12 +98,11 @@ enum release_type {
   MAJOR,
   MINOR,
   PATCH,
-  // TODO: also support
-  //  - PRE_MAJOR
-  //  - PRE_MINOR
-  //  - PRE_PATCH
-  //  - PRE_RELEASE
-  //  - RELEASE
+  PRE_MAJOR,
+  PRE_MINOR,
+  PRE_PATCH,
+  RELEASE,
+  PRE_RELEASE,
 };
 
 // Increment the version according to the provided release type.

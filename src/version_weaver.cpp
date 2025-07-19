@@ -369,8 +369,11 @@ std::optional<std::string> minimum(std::string_view range) {
 
 std::expected<std::string, parse_error> inc(version input,
                                             release_type release_type) {
+  version_weaver::version result;
+  std::string incremented;
   switch (release_type) {
-    case MAJOR: {
+    case MAJOR:
+    case PRE_MAJOR: {
       int major_int;
       auto [ptr, ec] =
           std::from_chars(input.major.data(),
@@ -379,11 +382,12 @@ std::expected<std::string, parse_error> inc(version input,
         return std::unexpected(parse_error::INVALID_MAJOR);
       }
       auto incremented_major_int = major_int + 1;
-      auto major = std::to_string(incremented_major_int);
-      auto new_version = version_weaver::version{major, "0", "0"};
-      return new_version;
+      incremented = std::move(std::to_string(incremented_major_int));
+      result = version_weaver::version{incremented, "0", "0"};
+      break;
     }
-    case MINOR: {
+    case MINOR:
+    case PRE_MINOR: {
       int minor_int;
       auto [ptr, ec] =
           std::from_chars(input.minor.data(),
@@ -392,12 +396,33 @@ std::expected<std::string, parse_error> inc(version input,
         return std::unexpected(parse_error::INVALID_MINOR);
       }
       auto incremented_minor_int = minor_int + 1;
-      return version_weaver::version{
-          input.major, std::to_string(incremented_minor_int), "0"};
+      incremented = std::move(std::to_string(incremented_minor_int));
+      result = version_weaver::version{input.major, incremented, "0"};
+      break;
     }
-    case PATCH: {
-      if (input.pre_release) {
+    case PATCH:
+    case PRE_PATCH:
+    case PRE_RELEASE: {
+      if (input.pre_release.has_value() && release_type == PATCH) {
         return version_weaver::version{input.major, input.minor, input.patch};
+      }
+      if (release_type == PRE_RELEASE && input.pre_release.has_value()) {
+        // TODO: support non-int pre_releases as well
+        //       (see:
+        //       https://github.com/npm/node-semver/blob/d17aebf8/test/fixtures/increments.js#L22-L36)
+        auto pre_release_value = input.pre_release.value();
+        int prerelease_int;
+        auto [ptr, ec] =
+            std::from_chars(pre_release_value.data(),
+                            pre_release_value.data() + pre_release_value.size(),
+                            prerelease_int);
+        if (ec != std::errc()) {
+          return std::unexpected(parse_error::INVALID_PRERELEASE);
+        }
+        auto incremented_prerelease_int = prerelease_int + 1;
+        incremented = std::move(std::to_string(incremented_prerelease_int));
+        return version_weaver::version{input.major, input.minor, input.patch,
+                                       incremented};
       }
       int patch_int;
       auto [ptr, ec] =
@@ -407,12 +432,26 @@ std::expected<std::string, parse_error> inc(version input,
         return std::unexpected(parse_error::INVALID_PATCH);
       }
       auto incremented_patch_int = patch_int + 1;
-      return version_weaver::version{input.major, input.minor,
-                                     std::to_string(incremented_patch_int)};
+      incremented = std::move(std::to_string(incremented_patch_int));
+      result = version_weaver::version{input.major, input.minor, incremented};
+      break;
     }
+    case RELEASE: {
+      if (!input.pre_release.has_value()) {
+        return std::unexpected(parse_error::INVALID_INPUT);
+      }
+      return version_weaver::version{input.major, input.minor, input.patch};
+    };
     default:
       return std::unexpected(parse_error::INVALID_RELEASE_TYPE);
   }
+
+  if (release_type == PRE_MAJOR || release_type == PRE_MINOR ||
+      release_type == PRE_PATCH || release_type == PRE_RELEASE) {
+    result.pre_release = "0";
+  }
+
+  return result;
 }
 
 constexpr inline bool contains_only_digits(std::string_view input) noexcept {
